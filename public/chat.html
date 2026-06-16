@@ -2,7 +2,10 @@
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no"
+    />
     <title>Мессенджер - Чаты</title>
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
@@ -65,6 +68,7 @@
         flex: 1;
         overflow: hidden;
       }
+
       .sidebar {
         width: 380px;
         min-width: 380px;
@@ -72,8 +76,8 @@
         border-right: 1px solid var(--border);
         display: flex;
         flex-direction: column;
-        transition: all 0.3s ease;
-        z-index: 10;
+        transition: left 0.3s ease;
+        z-index: 150;
       }
       .sidebar-header {
         padding: 20px;
@@ -104,6 +108,7 @@
         align-items: center;
         justify-content: center;
         transition: all 0.3s ease;
+        flex-shrink: 0;
       }
       .icon-btn:hover {
         border-color: var(--primary);
@@ -145,44 +150,30 @@
         background: var(--primary);
         border-radius: 4px;
       }
+
       .chat-item {
-        padding: 14px;
+        padding: 12px 14px;
         margin-bottom: 4px;
         border-radius: 12px;
         cursor: pointer;
         transition: all 0.3s ease;
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 10px;
         animation: slideIn 0.3s ease;
         position: relative;
       }
-      .chat-item:hover .delete-chat-btn {
-        opacity: 1;
+      .chat-item:hover {
+        background: var(--surface2);
       }
-      .delete-chat-btn {
-        position: absolute;
-        right: 8px;
-        top: 50%;
-        transform: translateY(-50%);
-        opacity: 0;
-        background: rgba(239, 68, 68, 0.2);
-        border: 1px solid rgba(239, 68, 68, 0.3);
-        color: var(--danger);
-        width: 28px;
-        height: 28px;
-        border-radius: 8px;
-        cursor: pointer;
-        font-size: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.3s ease;
-        z-index: 5;
+      .chat-item.active {
+        background: var(--gradient);
+        box-shadow: 0 4px 15px var(--primary-glow);
       }
-      .delete-chat-btn:hover {
-        background: rgba(239, 68, 68, 0.4);
-        transform: translateY(-50%) scale(1.1);
+      .chat-item.active .chat-name,
+      .chat-item.active .chat-last,
+      .chat-item.active .unread-badge {
+        color: white;
       }
       @keyframes slideIn {
         from {
@@ -194,31 +185,15 @@
           transform: translateX(0);
         }
       }
-      .chat-item:hover {
-        background: var(--surface2);
-        transform: translateX(4px);
-      }
-      .chat-item.active {
-        background: var(--gradient);
-        box-shadow: 0 4px 15px var(--primary-glow);
-      }
-      .chat-item.active .chat-name,
-      .chat-item.active .chat-last,
-      .chat-item.active .unread-badge {
-        color: white;
-      }
-      .chat-item.active .delete-chat-btn {
-        opacity: 0.8;
-      }
       .chat-avatar {
-        width: 48px;
-        height: 48px;
+        width: 44px;
+        height: 44px;
         border-radius: 50%;
         background: var(--gradient);
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 20px;
+        font-size: 18px;
         font-weight: 700;
         color: white;
         flex-shrink: 0;
@@ -229,38 +204,72 @@
       }
       .chat-name {
         font-weight: 600;
-        font-size: 15px;
+        font-size: 14px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
       }
       .chat-last {
-        font-size: 13px;
+        font-size: 12px;
         color: var(--text2);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
         margin-top: 2px;
       }
+
+      /* Счётчик и удаление - фикс наложения */
+      .chat-item-right {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+      }
       .unread-badge {
         background: var(--primary);
         color: white;
         font-size: 11px;
         font-weight: 700;
-        padding: 2px 8px;
+        padding: 3px 8px;
         border-radius: 12px;
         min-width: 22px;
         text-align: center;
-        flex-shrink: 0;
       }
       .online-dot {
         width: 10px;
         height: 10px;
         border-radius: 50%;
         background: var(--online);
-        flex-shrink: 0;
         box-shadow: 0 0 10px var(--online);
+        flex-shrink: 0;
       }
+      .delete-chat-btn {
+        opacity: 0;
+        background: rgba(239, 68, 68, 0.2);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: var(--danger);
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+      }
+      .chat-item:hover .delete-chat-btn {
+        opacity: 1;
+      }
+      .delete-chat-btn:hover {
+        background: rgba(239, 68, 68, 0.5);
+      }
+      .chat-item.active .delete-chat-btn {
+        opacity: 0.9;
+      }
+
+      /* Главная */
       .main {
         flex: 1;
         display: flex;
@@ -298,24 +307,27 @@
         display: flex;
       }
       .chat-header {
-        padding: 20px;
+        padding: 14px 20px;
         border-bottom: 1px solid var(--border);
         display: flex;
         justify-content: space-between;
         align-items: center;
         background: var(--surface);
+        flex-wrap: wrap;
+        gap: 8px;
       }
       .chat-header h2 {
-        font-size: 18px;
+        font-size: 17px;
         font-weight: 600;
       }
       .chat-header .header-actions {
         display: flex;
         gap: 8px;
         align-items: center;
+        flex-shrink: 0;
       }
       .typing-indicator {
-        font-size: 13px;
+        font-size: 12px;
         color: var(--primary);
         font-style: italic;
         animation: blink 1s infinite;
@@ -331,7 +343,7 @@
       }
       .messages {
         flex: 1;
-        padding: 20px;
+        padding: 16px;
         overflow-y: auto;
         display: flex;
         flex-direction: column;
@@ -346,13 +358,11 @@
       }
       .message {
         max-width: 70%;
-        padding: 8px 14px;
-        border-radius: 16px;
+        padding: 8px 12px;
+        border-radius: 14px;
         animation: messageIn 0.3s ease;
         word-wrap: break-word;
         position: relative;
-        display: flex;
-        flex-direction: column;
       }
       @keyframes messageIn {
         from {
@@ -395,41 +405,36 @@
       }
       .message .delete-msg-btn {
         position: absolute;
-        top: 4px;
+        top: 2px;
         right: 4px;
         background: none;
         border: none;
         color: inherit;
         opacity: 0;
         cursor: pointer;
-        font-size: 12px;
+        font-size: 11px;
         transition: all 0.3s ease;
       }
       .message:hover .delete-msg-btn {
         opacity: 0.7;
       }
-      .message .delete-msg-btn:hover {
-        opacity: 1;
-      }
-      .status-check {
-        font-size: 10px;
-      }
       .status-check.read {
         color: #60a5fa;
       }
+
       .message-input {
-        padding: 16px 20px;
+        padding: 12px 16px;
         border-top: 1px solid var(--border);
         display: flex;
-        gap: 12px;
+        gap: 10px;
         background: var(--surface);
       }
       .message-input input {
         flex: 1;
-        padding: 12px 16px;
+        padding: 10px 14px;
         background: var(--input-bg);
         border: 2px solid var(--border);
-        border-radius: 12px;
+        border-radius: 10px;
         color: var(--text);
         font-size: 14px;
         transition: all 0.3s ease;
@@ -443,8 +448,8 @@
         background: var(--gradient);
         color: white;
         border: none;
-        padding: 12px 24px;
-        border-radius: 12px;
+        padding: 10px 20px;
+        border-radius: 10px;
         cursor: pointer;
         font-weight: 600;
         transition: all 0.3s ease;
@@ -454,29 +459,31 @@
         box-shadow: 0 4px 20px var(--primary-glow);
         transform: scale(1.02);
       }
+
+      /* Нижнее меню */
       .bottom-nav {
         display: flex;
         background: var(--surface);
         border-top: 1px solid var(--border);
-        padding: 8px 20px;
+        padding: 6px 16px;
         gap: 8px;
         z-index: 20;
       }
       .nav-item {
         flex: 1;
-        padding: 12px;
-        border-radius: 12px;
+        padding: 10px;
+        border-radius: 10px;
         cursor: pointer;
         text-align: center;
         font-weight: 500;
-        font-size: 14px;
+        font-size: 13px;
         transition: all 0.3s ease;
         color: var(--text2);
         border: 2px solid transparent;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 8px;
+        gap: 6px;
       }
       .nav-item:hover {
         background: var(--surface2);
@@ -488,12 +495,11 @@
         border-color: transparent;
         box-shadow: 0 4px 15px var(--primary-glow);
       }
-      .nav-item .nav-icon {
-        font-size: 18px;
-      }
+
+      /* Настройки */
       .settings-panel {
         display: none;
-        padding: 24px;
+        padding: 20px;
         flex: 1;
         overflow-y: auto;
         background: var(--surface);
@@ -502,19 +508,19 @@
         display: block;
       }
       .settings-panel h2 {
-        font-size: 24px;
-        margin-bottom: 24px;
+        font-size: 22px;
+        margin-bottom: 20px;
         background: var(--gradient);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
       }
       .settings-section {
-        margin-bottom: 32px;
+        margin-bottom: 24px;
       }
       .settings-section h3 {
-        font-size: 16px;
-        margin-bottom: 16px;
+        font-size: 13px;
+        margin-bottom: 12px;
         color: var(--text2);
         text-transform: uppercase;
         letter-spacing: 1px;
@@ -524,21 +530,23 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 16px;
+        padding: 14px;
         background: var(--surface2);
-        border-radius: 12px;
+        border-radius: 10px;
         margin-bottom: 8px;
         transition: all 0.3s ease;
+        gap: 12px;
+        flex-wrap: wrap;
       }
       .setting-item:hover {
         background: var(--input-bg);
       }
-      .setting-item .setting-info h4 {
-        font-size: 15px;
-        margin-bottom: 4px;
+      .setting-info h4 {
+        font-size: 14px;
+        margin-bottom: 2px;
       }
-      .setting-item .setting-info p {
-        font-size: 13px;
+      .setting-info p {
+        font-size: 12px;
         color: var(--text2);
       }
       .setting-item input[type="text"],
@@ -548,27 +556,34 @@
         border: 2px solid var(--border);
         border-radius: 8px;
         color: var(--text);
-        font-size: 14px;
+        font-size: 13px;
         outline: none;
-        width: 180px;
+        width: 140px;
+        flex-shrink: 0;
       }
-      .setting-item button {
-        padding: 8px 16px;
+      .setting-item input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 10px var(--primary-glow);
+      }
+      .setting-item .save-btn {
+        padding: 8px 14px;
         background: var(--primary);
         color: white;
         border: none;
         border-radius: 8px;
         cursor: pointer;
         font-weight: 600;
+        font-size: 13px;
         transition: all 0.3s ease;
+        flex-shrink: 0;
       }
-      .setting-item button:hover {
+      .setting-item .save-btn:hover {
         box-shadow: 0 0 10px var(--primary-glow);
       }
       .toggle-switch {
         position: relative;
-        width: 52px;
-        height: 28px;
+        width: 48px;
+        height: 26px;
         flex-shrink: 0;
       }
       .toggle-switch input {
@@ -585,13 +600,13 @@
         bottom: 0;
         background: #333;
         transition: 0.3s;
-        border-radius: 28px;
+        border-radius: 26px;
       }
       .toggle-slider:before {
         position: absolute;
         content: "";
-        height: 22px;
-        width: 22px;
+        height: 20px;
+        width: 20px;
         left: 3px;
         bottom: 3px;
         background: white;
@@ -602,64 +617,72 @@
         background: var(--primary);
       }
       input:checked + .toggle-slider:before {
-        transform: translateX(24px);
+        transform: translateX(22px);
       }
       .danger-btn {
         width: 100%;
-        padding: 14px;
+        padding: 12px;
         background: rgba(239, 68, 68, 0.1);
         border: 1px solid rgba(239, 68, 68, 0.3);
         color: var(--danger);
-        border-radius: 12px;
+        border-radius: 10px;
         cursor: pointer;
         font-weight: 600;
-        font-size: 15px;
+        font-size: 14px;
         transition: all 0.3s ease;
-        margin-top: 16px;
+        margin-top: 12px;
       }
       .danger-btn:hover {
         background: rgba(239, 68, 68, 0.2);
         box-shadow: 0 0 20px var(--danger-glow);
       }
-      .info-item {
+
+      /* Аккаунт в настройках */
+      .account-card {
+        background: var(--surface2);
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 8px;
+      }
+      .account-card .account-row {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 12px 16px;
+        padding: 8px 0;
       }
-      .info-item span:first-child {
+      .account-card .account-label {
+        font-size: 13px;
         color: var(--text2);
-        font-size: 14px;
       }
-      .info-item span:last-child {
+      .account-card .account-value {
+        font-size: 14px;
         font-weight: 500;
-        font-size: 14px;
       }
+
+      /* Уведомления */
       #notifications-container {
         position: fixed;
-        top: 20px;
-        right: 20px;
+        top: 16px;
+        right: 16px;
         z-index: 9999;
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 8px;
+        pointer-events: none;
       }
       .notification-toast {
+        pointer-events: auto;
         background: var(--surface);
         border: 1px solid var(--border);
         color: var(--text);
-        padding: 16px 20px;
-        border-radius: 16px;
+        padding: 12px 16px;
+        border-radius: 12px;
         box-shadow: var(--shadow);
-        min-width: 320px;
+        min-width: 280px;
         animation: slideInRight 0.4s ease;
         cursor: pointer;
         backdrop-filter: blur(20px);
-        position: relative;
         border-left: 4px solid var(--primary);
-      }
-      .notification-toast.group {
-        border-left-color: #6366f1;
       }
       @keyframes slideInRight {
         from {
@@ -683,23 +706,24 @@
       }
       .notification-toast .notif-sender {
         font-weight: 600;
-        margin-bottom: 4px;
-        font-size: 14px;
+        font-size: 13px;
       }
       .notification-toast .notif-msg {
         opacity: 0.8;
-        font-size: 13px;
+        font-size: 12px;
       }
       .notification-toast .close-btn {
         position: absolute;
-        top: 8px;
-        right: 12px;
+        top: 6px;
+        right: 10px;
         background: none;
         border: none;
         color: var(--text2);
         cursor: pointer;
-        font-size: 18px;
+        font-size: 16px;
       }
+
+      /* Модальные окна */
       .modal-overlay {
         display: none;
         position: fixed;
@@ -719,9 +743,9 @@
       .modal {
         background: var(--surface);
         border: 1px solid var(--border);
-        border-radius: 20px;
-        padding: 32px;
-        max-width: 400px;
+        border-radius: 16px;
+        padding: 24px;
+        max-width: 360px;
         width: 90%;
         box-shadow: var(--shadow);
         animation: fadeInUp 0.3s ease;
@@ -737,27 +761,27 @@
         }
       }
       .modal h3 {
-        margin-bottom: 12px;
-        font-size: 18px;
+        font-size: 16px;
+        margin-bottom: 8px;
       }
       .modal p {
         color: var(--text2);
-        margin-bottom: 24px;
-        font-size: 14px;
+        font-size: 13px;
+        margin-bottom: 20px;
       }
       .modal-actions {
         display: flex;
-        gap: 12px;
+        gap: 10px;
       }
       .modal-btn {
         flex: 1;
-        padding: 12px;
-        border-radius: 10px;
+        padding: 10px;
+        border-radius: 8px;
         cursor: pointer;
         font-weight: 600;
         transition: all 0.3s ease;
         border: none;
-        font-size: 14px;
+        font-size: 13px;
       }
       .modal-btn.cancel {
         background: var(--input-bg);
@@ -767,9 +791,8 @@
         background: var(--danger);
         color: white;
       }
-      .modal-btn:hover {
-        transform: scale(1.02);
-      }
+
+      /* Кнопка бургер - фикс для телефона */
       .mobile-toggle {
         display: none;
         position: fixed;
@@ -786,18 +809,21 @@
         color: var(--text);
         align-items: center;
         justify-content: center;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
       }
+
+      /* Адаптив */
       @media (max-width: 768px) {
         .sidebar {
           position: fixed;
           left: -100%;
           top: 0;
-          bottom: 0;
+          bottom: 60px;
           width: 100%;
-          max-width: 380px;
+          max-width: 340px;
           z-index: 150;
           transition: left 0.3s ease;
-          box-shadow: var(--shadow);
+          box-shadow: 5px 0 20px rgba(0, 0, 0, 0.5);
         }
         .sidebar.open {
           left: 0;
@@ -806,27 +832,36 @@
           display: flex;
         }
         .main {
-          width: 100%;
+          padding-top: 50px;
+        }
+        .chat-header {
+          padding-top: 50px;
         }
         .message {
           max-width: 85%;
         }
         .notification-toast {
           min-width: auto;
-          width: calc(100vw - 40px);
+          width: calc(100vw - 32px);
         }
         .bottom-nav {
-          padding: 8px 12px;
+          padding: 6px 10px;
         }
         .nav-item {
-          font-size: 12px;
-          padding: 10px 8px;
+          font-size: 11px;
+          padding: 8px 6px;
+          gap: 4px;
+        }
+        .setting-item input[type="text"],
+        .setting-item input[type="password"] {
+          width: 110px;
         }
       }
     </style>
   </head>
   <body>
     <button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
+
     <div class="modal-overlay" id="delete-modal">
       <div class="modal">
         <h3>Удалить чат?</h3>
@@ -853,6 +888,7 @@
         </div>
       </div>
     </div>
+
     <div class="app-container">
       <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
@@ -951,7 +987,9 @@
                 type="text"
                 id="displayname-input"
                 placeholder="Имя"
-              /><button onclick="updateDisplayName()">Сохранить</button>
+              /><button class="save-btn" onclick="updateDisplayName()">
+                Сохранить
+              </button>
             </div>
             <div class="setting-item">
               <div class="setting-info"><h4>Сменить пароль</h4></div>
@@ -963,19 +1001,23 @@
                 type="password"
                 id="new-password"
                 placeholder="Новый"
-              /><button onclick="updatePassword()">Сменить</button>
+              /><button class="save-btn" onclick="updatePassword()">✓</button>
             </div>
             <div class="setting-item">
               <div class="setting-info"><h4>Выход на всех устройствах</h4></div>
-              <button onclick="logoutAll()">Выйти</button>
+              <button class="save-btn" onclick="logoutAll()">Выйти</button>
             </div>
           </div>
           <div class="settings-section">
             <h3>Аккаунт</h3>
-            <div class="setting-item">
-              <div class="info-item">
-                <span>Имя пользователя</span
-                ><span id="settings-username"></span>
+            <div class="account-card">
+              <div class="account-row">
+                <span class="account-label">Имя пользователя</span
+                ><span class="account-value" id="settings-username">—</span>
+              </div>
+              <div class="account-row">
+                <span class="account-label">Отображаемое имя</span
+                ><span class="account-value" id="settings-displayname">—</span>
               </div>
             </div>
             <button class="danger-btn" onclick="deleteAccount()">
@@ -991,10 +1033,10 @@
         data-tab="chats"
         onclick="switchTab('chats')"
       >
-        <span class="nav-icon">💬</span> Чаты
+        💬 Чаты
       </div>
       <div class="nav-item" data-tab="settings" onclick="switchTab('settings')">
-        <span class="nav-icon">⚙️</span> Настройки
+        ⚙️ Настройки
       </div>
     </div>
     <div id="notifications-container"></div>
@@ -1015,8 +1057,7 @@
         typingTimeout = null;
 
       const savedTheme = localStorage.getItem("theme");
-      const isLight = savedTheme === "light";
-      if (isLight) {
+      if (savedTheme === "light") {
         document.body.classList.add("light-theme");
         document.getElementById("theme-toggle").checked = false;
       }
@@ -1056,6 +1097,8 @@
       function loadSettings() {
         document.getElementById("settings-username").textContent =
           currentUser.username;
+        document.getElementById("settings-displayname").textContent =
+          currentUser.displayName || "—";
         document.getElementById("displayname-input").value =
           currentUser.displayName || "";
       }
@@ -1138,13 +1181,13 @@
         const toast = document.createElement("div");
         toast.className = `notification-toast ${type}`;
         toast.innerHTML = `<div class="notif-sender">${title}</div><div class="notif-msg">${message}</div><button class="close-btn" onclick="event.stopPropagation();this.parentElement.remove()">✕</button>`;
-        if (chatId) {
+        if (chatId)
           toast.addEventListener("click", (e) => {
-            if (e.target.classList.contains("close-btn")) return;
-            openChatById(chatId);
-            toast.remove();
+            if (!e.target.classList.contains("close-btn")) {
+              openChatById(chatId);
+              toast.remove();
+            }
           });
-        }
         container.appendChild(toast);
         setTimeout(() => {
           if (toast.parentElement) {
@@ -1175,7 +1218,6 @@
           });
         } catch (e) {}
       }
-
       function urlBase64ToUint8Array(s) {
         const p = "=".repeat((4 - (s.length % 4)) % 4);
         const b = (s + p).replace(/-/g, "+").replace(/_/g, "/");
@@ -1192,17 +1234,16 @@
 
       async function loadChats() {
         try {
-          const res = await fetch("/api/chats", {
+          const r = await fetch("/api/chats", {
             headers: { Authorization: `Bearer ${token}` },
           });
-          const data = await res.json();
-          if (data.success) {
-            chats = data.chats;
+          const d = await r.json();
+          if (d.success) {
+            chats = d.chats;
             renderChats();
           }
         } catch (e) {}
       }
-
       function getChatName(chat) {
         if (chat.name) return chat.name;
         const o = chat.members?.find((m) => m.id !== currentUser.id);
@@ -1213,16 +1254,17 @@
       }
 
       function renderChats() {
-        const container = document.getElementById("chats-list");
-        container.innerHTML = chats
+        document.getElementById("chats-list").innerHTML = chats
           .map((chat, i) => {
             const other = chat.members?.find((m) => m.id !== currentUser.id);
             const isOnline = other && onlineUserIds.has(other.id);
             return `<div class="chat-item ${currentChat?.id === chat.id ? "active" : ""}" onclick="openChatById(${chat.id})" style="animation-delay:${i * 0.05}s">
       <div class="chat-avatar">${getChatAvatar(chat)}</div>
       <div class="chat-info"><div class="chat-name">${getChatName(chat)}</div><div class="chat-last">${chat.last_message || "Нет сообщений"}</div></div>
-      ${chat.unread_count > 0 ? `<div class="unread-badge">${chat.unread_count}</div>` : ""}
-      ${isOnline ? '<div class="online-dot"></div>' : ""}
+      <div class="chat-item-right">
+        ${chat.unread_count > 0 ? `<div class="unread-badge">${chat.unread_count}</div>` : ""}
+        ${isOnline ? '<div class="online-dot"></div>' : ""}
+      </div>
       <button class="delete-chat-btn" onclick="event.stopPropagation();confirmDeleteChat(${chat.id})" title="Удалить">✕</button>
     </div>`;
           })
@@ -1246,28 +1288,25 @@
 
       async function loadMessages(chatId) {
         try {
-          const res = await fetch(`/api/chats/${chatId}/messages`, {
+          const r = await fetch(`/api/chats/${chatId}/messages`, {
             headers: { Authorization: `Bearer ${token}` },
           });
-          const data = await res.json();
-          if (data.success) {
-            document.getElementById("messages").innerHTML = data.messages
+          const d = await r.json();
+          if (d.success) {
+            document.getElementById("messages").innerHTML = d.messages
               .map((msg) => {
                 const isMine = msg.sender_id === currentUser.id;
-                let statusIcon = "";
+                let icon = "";
                 if (isMine) {
-                  if (msg.status === "read") statusIcon = "✓✓";
-                  else if (msg.status === "delivered") statusIcon = "✓✓";
-                  else statusIcon = "✓";
+                  if (msg.status === "read") icon = "✓✓";
+                  else if (msg.status === "delivered") icon = "✓✓";
+                  else icon = "✓";
                 }
                 return `<div class="message ${isMine ? "sent" : "received"}">
           ${!isMine ? `<div class="msg-sender">${msg.username}</div>` : ""}
           <div>${msg.content}</div>
-          <div class="msg-time-status">
-            <span>${new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
-            ${isMine ? `<span class="status-check ${msg.status === "read" ? "read" : ""}">${statusIcon}</span>` : ""}
-          </div>
-          <button class="delete-msg-btn" onclick="event.stopPropagation();confirmDeleteMsg(${msg.id})" title="Удалить">🗑</button>
+          <div class="msg-time-status"><span>${new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>${isMine ? `<span class="status-check ${msg.status === "read" ? "read" : ""}">${icon}</span>` : ""}</div>
+          <button class="delete-msg-btn" onclick="event.stopPropagation();confirmDeleteMsg(${msg.id})">🗑</button>
         </div>`;
               })
               .join("");
@@ -1313,7 +1352,6 @@
         clearTimeout(typingTimeout);
         typingTimeout = setTimeout(stopTyping, 2000);
       }
-
       function stopTyping() {
         if (!currentChat) return;
         socket.emit("typing-stop", {
@@ -1321,7 +1359,6 @@
           userId: currentUser.id,
         });
       }
-
       function closeChat() {
         currentChat = null;
         document.getElementById("empty-chat").style.display = "flex";
@@ -1387,7 +1424,6 @@
           window.location.href = "/";
         } catch (e) {}
       }
-
       async function createGroup() {
         const name = prompt("Название:");
         if (!name) return;
@@ -1426,7 +1462,6 @@
               .join("");
         } catch (e) {}
       }
-
       async function startPrivateChat(username) {
         try {
           const r = await fetch("/api/chats", {
@@ -1444,7 +1479,6 @@
           }
         } catch (e) {}
       }
-
       function logout() {
         localStorage.clear();
         window.location.href = "/";
