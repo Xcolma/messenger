@@ -28,7 +28,6 @@
           #a78bfa 100%
         );
       }
-
       .light-theme {
         --bg: #f0f4ff;
         --surface: #ffffff;
@@ -48,13 +47,11 @@
           #60a5fa 100%
         );
       }
-
       * {
         margin: 0;
         padding: 0;
         box-sizing: border-box;
       }
-
       body {
         font-family: "Inter", sans-serif;
         background: var(--bg);
@@ -66,7 +63,6 @@
         transition: all 0.5s ease;
         overflow: hidden;
       }
-
       .bg-animation {
         position: fixed;
         top: 0;
@@ -76,7 +72,6 @@
         z-index: 0;
         overflow: hidden;
       }
-
       .bg-animation .orb {
         position: absolute;
         border-radius: 50%;
@@ -84,16 +79,13 @@
         opacity: 0.3;
         animation: float 20s infinite ease-in-out;
       }
-
       .bg-animation .orb:nth-child(1) {
         width: 400px;
         height: 400px;
         background: var(--primary);
         top: -100px;
         left: -100px;
-        animation-delay: 0s;
       }
-
       .bg-animation .orb:nth-child(2) {
         width: 300px;
         height: 300px;
@@ -102,7 +94,6 @@
         right: -50px;
         animation-delay: -7s;
       }
-
       .bg-animation .orb:nth-child(3) {
         width: 250px;
         height: 250px;
@@ -111,7 +102,6 @@
         left: 50%;
         animation-delay: -14s;
       }
-
       @keyframes float {
         0%,
         100% {
@@ -127,7 +117,6 @@
           transform: translate(-100px, 50px) scale(1.05);
         }
       }
-
       .container {
         position: relative;
         z-index: 1;
@@ -141,7 +130,6 @@
         animation: fadeInUp 0.8s ease;
         backdrop-filter: blur(20px);
       }
-
       @keyframes fadeInUp {
         from {
           opacity: 0;
@@ -152,14 +140,12 @@
           transform: translateY(0);
         }
       }
-
       .logo {
         text-align: center;
         margin-bottom: 32px;
         font-size: 36px;
         animation: pulse 2s infinite;
       }
-
       @keyframes pulse {
         0%,
         100% {
@@ -169,7 +155,6 @@
           transform: scale(1.05);
         }
       }
-
       h1 {
         text-align: center;
         font-size: 28px;
@@ -180,19 +165,16 @@
         -webkit-text-fill-color: transparent;
         background-clip: text;
       }
-
       .subtitle {
         text-align: center;
         color: var(--text2);
         margin-bottom: 32px;
         font-size: 14px;
       }
-
       .form-group {
         margin-bottom: 20px;
         position: relative;
       }
-
       .form-group input {
         width: 100%;
         padding: 14px 16px;
@@ -204,12 +186,10 @@
         transition: all 0.3s ease;
         outline: none;
       }
-
       .form-group input:focus {
         border-color: var(--primary);
         box-shadow: 0 0 20px var(--primary-glow);
       }
-
       .form-group label {
         position: absolute;
         left: 16px;
@@ -220,7 +200,6 @@
         pointer-events: none;
         font-size: 16px;
       }
-
       .form-group input:focus + label,
       .form-group input:not(:placeholder-shown) + label {
         top: 0;
@@ -230,7 +209,6 @@
         background: var(--surface);
         color: var(--primary);
       }
-
       .btn {
         width: 100%;
         padding: 14px;
@@ -245,16 +223,13 @@
         position: relative;
         overflow: hidden;
       }
-
       .btn:hover {
         transform: translateY(-2px);
         box-shadow: 0 10px 30px var(--primary-glow);
       }
-
       .btn:active {
         transform: translateY(0);
       }
-
       .btn::after {
         content: "";
         position: absolute;
@@ -271,7 +246,6 @@
         transform: rotate(45deg);
         animation: shine 3s infinite;
       }
-
       @keyframes shine {
         0% {
           transform: translateX(-100%) rotate(45deg);
@@ -280,25 +254,21 @@
           transform: translateX(100%) rotate(45deg);
         }
       }
-
       .link {
         text-align: center;
         margin-top: 20px;
         color: var(--text2);
       }
-
       .link a {
         color: var(--primary);
         text-decoration: none;
         font-weight: 500;
         transition: all 0.3s ease;
       }
-
       .link a:hover {
         color: var(--secondary);
         text-shadow: 0 0 10px var(--primary-glow);
       }
-
       .theme-toggle {
         position: fixed;
         top: 20px;
@@ -317,12 +287,10 @@
         transition: all 0.3s ease;
         color: var(--text);
       }
-
       .theme-toggle:hover {
         box-shadow: 0 0 20px var(--primary-glow);
         transform: rotate(180deg);
       }
-
       .error-message {
         background: rgba(239, 68, 68, 0.1);
         border: 1px solid rgba(239, 68, 68, 0.3);
@@ -333,7 +301,6 @@
         display: none;
         animation: shake 0.5s ease;
       }
-
       @keyframes shake {
         0%,
         100% {
@@ -346,7 +313,6 @@
           transform: translateX(10px);
         }
       }
-
       @media (max-width: 480px) {
         .container {
           padding: 24px;
@@ -368,51 +334,41 @@
       <div class="orb"></div>
       <div class="orb"></div>
     </div>
-
-    <button
-      class="theme-toggle"
-      onclick="toggleTheme()"
-      title="Переключить тему"
-    >
-      🌓
-    </button>
-
+    <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
     <div class="container">
       <div class="logo">💬</div>
       <h1>Мессенджер</h1>
       <p class="subtitle">Общайтесь с друзьями в реальном времени</p>
-
       <div class="error-message" id="error-message"></div>
-
       <form id="login-form">
         <div class="form-group">
-          <input type="text" id="username" placeholder=" " required />
-          <label for="username">Логин</label>
+          <input type="text" id="username" placeholder=" " required /><label
+            for="username"
+            >Логин</label
+          >
         </div>
         <div class="form-group">
-          <input type="password" id="password" placeholder=" " required />
-          <label for="password">Пароль</label>
+          <input type="password" id="password" placeholder=" " required /><label
+            for="password"
+            >Пароль</label
+          >
         </div>
         <button type="submit" class="btn">Войти</button>
       </form>
-
       <p class="link">
         Нет аккаунта? <a href="/register">Зарегистрироваться</a>
       </p>
     </div>
-
     <script>
-      const savedTheme = localStorage.getItem("theme");
-      if (savedTheme === "light") {
+      if (localStorage.getItem("theme") === "light")
         document.body.classList.add("light-theme");
-      }
-
       function toggleTheme() {
         document.body.classList.toggle("light-theme");
-        const isLight = document.body.classList.contains("light-theme");
-        localStorage.setItem("theme", isLight ? "light" : "dark");
+        localStorage.setItem(
+          "theme",
+          document.body.classList.contains("light-theme") ? "light" : "dark",
+        );
       }
-
       document
         .getElementById("login-form")
         .addEventListener("submit", async (e) => {
@@ -420,16 +376,13 @@
           const username = document.getElementById("username").value;
           const password = document.getElementById("password").value;
           const errorDiv = document.getElementById("error-message");
-
           try {
             const res = await fetch("/api/auth/login", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ username, password }),
             });
-
             const data = await res.json();
-
             if (data.success) {
               localStorage.setItem("token", data.token);
               localStorage.setItem("user", JSON.stringify(data.user));
