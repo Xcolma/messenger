@@ -17,6 +17,7 @@ const io = socketIo(server, {
 app.use(cors());
 app.use(express.json({ limit: "50mb" }));
 app.use(express.static("public"));
+app.use("/chat", express.static("public/chat"));
 
 app.get("/", (req, res) =>
   res.sendFile(path.join(__dirname, "..", "public", "index.html")),
@@ -65,12 +66,10 @@ app.post("/api/chats", authMiddleware, async (req, res) => {
           .status(404)
           .json({ success: false, message: "Пользователь не найден" });
       if (otherUser.id === req.userId)
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: "Нельзя создать чат с самим собой",
-          });
+        return res.status(400).json({
+          success: false,
+          message: "Нельзя создать чат с самим собой",
+        });
       const chat = await db.createPrivateChat(req.userId, otherUser.id);
       const chats = await db.getUserChats(req.userId);
       const newChat = chats.find((c) => c.id === chat.id);
