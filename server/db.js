@@ -8,39 +8,30 @@ const pool = new Pool({
 
 async function initDB() {
   try {
-    await pool.query(`CREATE TABLE IF NOT EXISTS users (
-      id SERIAL PRIMARY KEY, 
-      username TEXT UNIQUE NOT NULL, 
-      password TEXT NOT NULL, 
-      display_name TEXT, 
-      created_at TIMESTAMP DEFAULT NOW()
-    )`);
-    await pool.query(`CREATE TABLE IF NOT EXISTS chats (
-      id SERIAL PRIMARY KEY, 
-      name TEXT, 
-      type TEXT NOT NULL DEFAULT 'private', 
-      created_by INTEGER REFERENCES users(id), 
-      created_at TIMESTAMP DEFAULT NOW()
-    )`);
-    await pool.query(`CREATE TABLE IF NOT EXISTS chat_members (
-      chat_id INTEGER REFERENCES chats(id) ON DELETE CASCADE, 
-      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE, 
-      joined_at TIMESTAMP DEFAULT NOW(), 
-      PRIMARY KEY (chat_id, user_id)
-    )`);
-    await pool.query(`CREATE TABLE IF NOT EXISTS messages (
-      id SERIAL PRIMARY KEY, 
-      chat_id INTEGER REFERENCES chats(id) ON DELETE CASCADE, 
-      sender_id INTEGER REFERENCES users(id) ON DELETE CASCADE, 
-      content TEXT NOT NULL, 
-      type TEXT DEFAULT 'text', 
-      status TEXT DEFAULT 'sent',
-      created_at TIMESTAMP DEFAULT NOW()
-    )`);
-    // Добавим колонку status если её нет
+    await pool.query(
+      `CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL, display_name TEXT, created_at TIMESTAMP DEFAULT NOW())`,
+    );
+    await pool.query(
+      `CREATE TABLE IF NOT EXISTS chats (id SERIAL PRIMARY KEY, name TEXT, type TEXT NOT NULL DEFAULT 'private', created_by INTEGER REFERENCES users(id), created_at TIMESTAMP DEFAULT NOW())`,
+    );
+    await pool.query(
+      `CREATE TABLE IF NOT EXISTS chat_members (chat_id INTEGER REFERENCES chats(id) ON DELETE CASCADE, user_id INTEGER REFERENCES users(id) ON DELETE CASCADE, joined_at TIMESTAMP DEFAULT NOW(), PRIMARY KEY (chat_id, user_id))`,
+    );
+    await pool.query(
+      `CREATE TABLE IF NOT EXISTS messages (id SERIAL PRIMARY KEY, chat_id INTEGER REFERENCES chats(id) ON DELETE CASCADE, sender_id INTEGER REFERENCES users(id) ON DELETE CASCADE, content TEXT NOT NULL, type TEXT DEFAULT 'text', status TEXT DEFAULT 'sent', created_at TIMESTAMP DEFAULT NOW())`,
+    );
     try {
       await pool.query(
         `ALTER TABLE messages ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'sent'`,
+      );
+      await pool.query(
+        `ALTER TABLE messages ADD COLUMN IF NOT EXISTS edited BOOLEAN DEFAULT false`,
+      );
+      await pool.query(
+        `ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to INTEGER`,
+      );
+      await pool.query(
+        `ALTER TABLE messages ADD COLUMN IF NOT EXISTS file_name TEXT`,
       );
     } catch (e) {}
     console.log("✅ База данных PostgreSQL готова");
@@ -116,10 +107,7 @@ async function createPrivateChat(user1Id, user2Id) {
 
 async function findPrivateChat(user1Id, user2Id) {
   const result = await pool.query(
-    `SELECT c.id, c.type FROM chats c 
-     JOIN chat_members cm1 ON c.id = cm1.chat_id AND cm1.user_id = $1 
-     JOIN chat_members cm2 ON c.id = cm2.chat_id AND cm2.user_id = $2 
-     WHERE c.type = 'private'`,
+    `SELECT c.id, c.type FROM chats c JOIN chat_members cm1 ON c.id = cm1.chat_id AND cm1.user_id = $1 JOIN chat_members cm2 ON c.id = cm2.chat_id AND cm2.user_id = $2 WHERE c.type = 'private'`,
     [user1Id, user2Id],
   );
   return result.rows[0] || null;
@@ -146,14 +134,7 @@ async function createGroupChat(name, creatorId, memberIds) {
 
 async function getUserChats(userId) {
   const result = await pool.query(
-    `SELECT c.id, c.name, c.type, 
-     (SELECT content FROM messages WHERE chat_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message,
-     (SELECT created_at FROM messages WHERE chat_id = c.id ORDER BY created_at DESC LIMIT 1) as last_time,
-     (SELECT COUNT(*) FROM messages WHERE chat_id = c.id AND sender_id != $1 AND status != 'read') as unread_count
-     FROM chats c 
-     JOIN chat_members cm ON c.id = cm.chat_id 
-     WHERE cm.user_id = $1 
-     ORDER BY last_time DESC NULLS LAST`,
+    `SELECT c.id, c.name, c.type, (SELECT content FROM messages WHERE chat_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message, (SELECT created_at FROM messages WHERE chat_id = c.id ORDER BY created_at DESC LIMIT 1) as last_time, (SELECT COUNT(*) FROM messages WHERE chat_id = c.id AND sender_id != $1 AND status != 'read') as unread_count FROM chats c JOIN chat_members cm ON c.id = cm.chat_id WHERE cm.user_id = $1 ORDER BY last_time DESC NULLS LAST`,
     [userId],
   );
   const chats = result.rows;
@@ -166,8 +147,7 @@ async function getUserChats(userId) {
 
 async function getChatMembers(chatId) {
   const result = await pool.query(
-    `SELECT u.id, u.username, u.display_name FROM users u 
-     JOIN chat_members cm ON u.id = cm.user_id WHERE cm.chat_id = $1`,
+    `SELECT u.id, u.username, u.display_name FROM users u JOIN chat_members cm ON u.id = cm.user_id WHERE cm.chat_id = $1`,
     [chatId],
   );
   return result.rows;
@@ -183,13 +163,15 @@ async function getGroupMembers(chatId) {
 
 async function saveMessage(data) {
   const result = await pool.query(
-    "INSERT INTO messages (chat_id, sender_id, content, type, status) VALUES ($1, $2, $3, $4, $5) RETURNING id, created_at",
+    "INSERT INTO messages (chat_id, sender_id, content, type, status, reply_to, file_name) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, created_at",
     [
       data.chatId,
       data.senderId,
       data.content,
       data.type || "text",
       data.status || "sent",
+      data.replyTo || null,
+      data.fileName || null,
     ],
   );
   return {
@@ -200,21 +182,23 @@ async function saveMessage(data) {
 }
 
 async function getChatMessages(chatId, userId, limit = 50, offset = 0) {
-  // Помечаем как прочитанные
   await pool.query(
     "UPDATE messages SET status = 'read' WHERE chat_id = $1 AND sender_id != $2 AND status != 'read'",
     [chatId, userId],
   );
-
   const result = await pool.query(
-    `SELECT m.id, m.content, m.type, m.status, m.created_at, 
-     u.id as sender_id, u.username, u.display_name 
-     FROM messages m JOIN users u ON m.sender_id = u.id 
-     WHERE m.chat_id = $1 
-     ORDER BY m.created_at ASC LIMIT $2 OFFSET $3`,
+    `SELECT m.id, m.content, m.type, m.status, m.edited, m.reply_to, m.file_name, m.created_at, u.id as sender_id, u.username, u.display_name FROM messages m JOIN users u ON m.sender_id = u.id WHERE m.chat_id = $1 ORDER BY m.created_at ASC LIMIT $2 OFFSET $3`,
     [chatId, limit, offset],
   );
   return result.rows;
+}
+
+async function updateMessage(messageId, userId, content) {
+  const result = await pool.query(
+    "UPDATE messages SET content = $1, edited = true WHERE id = $2 AND sender_id = $3 RETURNING id, chat_id",
+    [content, messageId, userId],
+  );
+  return result.rows[0];
 }
 
 async function deleteMessage(messageId, userId) {
@@ -242,6 +226,7 @@ async function deleteUser(id) {
 }
 
 module.exports = {
+  pool,
   createUser,
   findUserByUsername,
   findUserById,
@@ -256,6 +241,7 @@ module.exports = {
   getGroupMembers,
   saveMessage,
   getChatMessages,
+  updateMessage,
   deleteMessage,
   deleteChat,
   deleteUser,

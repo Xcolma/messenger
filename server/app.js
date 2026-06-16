@@ -15,7 +15,7 @@ const io = socketIo(server, {
 });
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "50mb" }));
 app.use(express.static("public"));
 
 app.get("/", (req, res) =>
@@ -121,6 +121,30 @@ app.delete("/api/messages/:id", authMiddleware, async (req, res) => {
   }
 });
 
+app.put("/api/messages/:id", authMiddleware, async (req, res) => {
+  try {
+    const { content } = req.body;
+    const msg = await db.updateMessage(req.params.id, req.userId, content);
+    if (!msg)
+      return res.status(404).json({ success: false, message: "Не найдено" });
+    const members = await db.getChatMembers(msg.chat_id);
+    members.forEach((member) => {
+      for (let [socketId, user] of onlineUsers) {
+        if (user.id === member.id) {
+          io.to(socketId).emit("edit-message", {
+            chatId: msg.chat_id,
+            messageId: parseInt(req.params.id),
+            content,
+          });
+        }
+      }
+    });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 app.put("/api/user/displayname", authMiddleware, async (req, res) => {
   try {
     const { displayName } = req.body;
@@ -136,11 +160,10 @@ app.put("/api/user/password", authMiddleware, async (req, res) => {
     const { oldPassword, newPassword } = req.body;
     const user = await db.findUserById(req.userId);
     const bcrypt = require("bcryptjs");
-    if (!bcrypt.compareSync(oldPassword, user.password)) {
+    if (!bcrypt.compareSync(oldPassword, user.password))
       return res
         .status(400)
         .json({ success: false, message: "Неверный текущий пароль" });
-    }
     const hashed = bcrypt.hashSync(newPassword, 10);
     await db.updatePassword(req.userId, hashed);
     res.json({ success: true });
@@ -150,8 +173,7 @@ app.put("/api/user/password", authMiddleware, async (req, res) => {
 });
 
 app.post("/api/auth/logout-all", authMiddleware, (req, res) => {
-  // Клиент сам удалит токен, плюс можно инвалидировать на клиенте
-  res.json({ success: true, message: "Выход на всех устройствах" });
+  res.json({ success: true });
 });
 
 app.post("/api/push/subscribe", authMiddleware, (req, res) => {
@@ -164,9 +186,8 @@ app.post("/api/push/unsubscribe", authMiddleware, (req, res) => {
   res.json({ success: true });
 });
 
-// Socket.IO
-const onlineUsers = new Map(); // socketId -> user
-const typingUsers = new Map(); // chatId -> Set of userIds
+const onlineUsers = new Map();
+const typingUsers = new Map();
 
 io.on("connection", (socket) => {
   socket.on("user-login", (userData) => {
@@ -178,24 +199,20 @@ io.on("connection", (socket) => {
     io.emit("online-users", Array.from(onlineUsers.values()));
   });
 
-  // Индикатор печати
   socket.on("typing-start", (data) => {
     const { chatId, userId, username } = data;
-    if (!typingUsers.has(chatId)) typingUsers.set(chatId, new Set());
-    typingUsers.get(chatId).add(userId);
-
-    // Отправляем всем в чате кроме отправителя
+    if (!typingUsers.has(chatId)) typingUsers.set(chatId, new Map());
+    typingUsers.get(chatId).set(userId, { username, time: Date.now() });
     db.getChatMembers(chatId).then((members) => {
       members.forEach((member) => {
         if (member.id !== userId) {
           for (let [socketId, user] of onlineUsers) {
-            if (user.id === member.id) {
+            if (user.id === member.id)
               io.to(socketId).emit("typing-start", {
                 chatId,
                 userId,
                 username,
               });
-            }
           }
         }
       });
@@ -204,32 +221,29 @@ io.on("connection", (socket) => {
 
   socket.on("typing-stop", (data) => {
     const { chatId, userId } = data;
-    if (typingUsers.has(chatId)) {
-      typingUsers.get(chatId).delete(userId);
-    }
+    if (typingUsers.has(chatId)) typingUsers.get(chatId).delete(userId);
     db.getChatMembers(chatId).then((members) => {
       members.forEach((member) => {
         if (member.id !== userId) {
           for (let [socketId, user] of onlineUsers) {
-            if (user.id === member.id) {
+            if (user.id === member.id)
               io.to(socketId).emit("typing-stop", { chatId, userId });
-            }
           }
         }
       });
     });
   });
 
-  // Приватные сообщения
   socket.on("private-message", async (data) => {
     const saved = await db.saveMessage({
       chatId: data.chatId,
       senderId: data.fromUser.id,
       content: data.message,
-      type: "private",
+      type: data.type || "text",
       status: "sent",
+      replyTo: data.replyTo,
+      fileName: data.fileName,
     });
-
     let recipientOnline = false;
     for (let [socketId, user] of onlineUsers) {
       if (user.id === data.toUserId) {
@@ -239,21 +253,23 @@ io.on("connection", (socket) => {
           timestamp: saved.created_at,
           chatId: data.chatId,
           messageId: saved.id,
-          status: "sent",
+          type: data.type,
+          replyTo: data.replyTo,
+          fileName: data.fileName,
+          status: "delivered",
         });
         recipientOnline = true;
         break;
       }
     }
-    if (!recipientOnline) {
+    if (!recipientOnline)
       push.sendPushNotification(
         data.toUserId,
         data.fromUser.username,
-        data.message,
+        data.message?.substring(0, 100) || "[Медиа]",
         data.chatId,
         "private",
       );
-    }
     socket.emit("message-sent", {
       message: data.message,
       timestamp: saved.created_at,
@@ -263,16 +279,16 @@ io.on("connection", (socket) => {
     });
   });
 
-  // Групповые сообщения
   socket.on("group-message", async (data) => {
     const saved = await db.saveMessage({
       chatId: data.groupId,
       senderId: data.fromUser.id,
       content: data.message,
-      type: "group",
+      type: data.type || "text",
       status: "sent",
+      replyTo: data.replyTo,
+      fileName: data.fileName,
     });
-
     const members = await db.getGroupMembers(data.groupId);
     members.forEach((member) => {
       if (member.id !== data.fromUser.id) {
@@ -285,21 +301,23 @@ io.on("connection", (socket) => {
               message: data.message,
               timestamp: saved.created_at,
               messageId: saved.id,
+              type: data.type,
+              replyTo: data.replyTo,
+              fileName: data.fileName,
               status: "sent",
             });
             memberOnline = true;
             break;
           }
         }
-        if (!memberOnline) {
+        if (!memberOnline)
           push.sendPushNotification(
             member.id,
             data.groupId,
-            `${data.fromUser.username}: ${data.message}`,
+            `${data.fromUser.username}: ${data.message?.substring(0, 100) || "[Медиа]"}`,
             data.groupId,
             "group",
           );
-        }
       }
     });
     socket.emit("message-sent", {
@@ -311,14 +329,38 @@ io.on("connection", (socket) => {
     });
   });
 
-  // Подтверждение прочтения
+  socket.on("edit-message", async (data) => {
+    const { messageId, chatId, content } = data;
+    await db.pool.query(
+      "UPDATE messages SET content = $1, edited = true WHERE id = $2",
+      [content, messageId],
+    );
+    const members = await db.getChatMembers(chatId);
+    members.forEach((member) => {
+      for (let [socketId, user] of onlineUsers) {
+        if (user.id === member.id)
+          io.to(socketId).emit("edit-message", { chatId, messageId, content });
+      }
+    });
+  });
+
   socket.on("mark-read", async (data) => {
-    const { chatId, messageId } = data;
-    await db.getChatMessages(chatId, data.userId); // это пометит всё как read
-    socket.emit("messages-read", { chatId });
+    const { chatId, userId } = data;
+    await db.pool.query(
+      "UPDATE messages SET status = 'read' WHERE chat_id = $1 AND sender_id != $2 AND status != 'read'",
+      [chatId, userId],
+    );
   });
 
   socket.on("disconnect", () => {
+    const user = onlineUsers.get(socket.id);
+    if (user) {
+      io.emit("user-offline", { userId: user.id });
+      for (let [chatId, users] of typingUsers) {
+        users.delete(user.id);
+        if (users.size === 0) typingUsers.delete(chatId);
+      }
+    }
     onlineUsers.delete(socket.id);
     io.emit("online-users", Array.from(onlineUsers.values()));
   });

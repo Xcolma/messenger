@@ -17,7 +17,6 @@ const subscriptions = new Map();
 function addSubscription(userId, subscription) {
   subscriptions.set(userId, subscription);
 }
-
 function removeSubscription(userId) {
   subscriptions.delete(userId);
 }
@@ -25,7 +24,6 @@ function removeSubscription(userId) {
 async function sendPushNotification(userId, title, message, chatId, type) {
   const subscription = subscriptions.get(userId);
   if (!subscription) return;
-
   try {
     await webpush.sendNotification(
       subscription,
@@ -38,10 +36,7 @@ async function sendPushNotification(userId, title, message, chatId, type) {
       }),
     );
   } catch (error) {
-    console.error("Push notification error:", error);
-    if (error.statusCode === 410) {
-      removeSubscription(userId);
-    }
+    if (error.statusCode === 410) removeSubscription(userId);
   }
 }
 
