@@ -69,13 +69,12 @@ initDB();
 
 // --- ПОЛЬЗОВАТЕЛИ ---
 
-function createUser(username, hashedPassword, displayName) {
-  return pool
-    .query(
-      "INSERT INTO users (username, password, display_name) VALUES ($1, $2, $3) RETURNING id, username, display_name",
-      [username, hashedPassword, displayName || username],
-    )
-    .then((result) => result.rows[0]);
+async function createUser(username, hashedPassword, displayName) {
+  const result = await pool.query(
+    "INSERT INTO users (username, password, display_name) VALUES ($1, $2, $3) RETURNING id, username, display_name",
+    [username, hashedPassword, displayName || username],
+  );
+  return result.rows[0];
 }
 
 async function findUserByUsername(username) {
@@ -104,17 +103,14 @@ async function searchUsers(query, currentUserId) {
 // --- ЧАТЫ ---
 
 async function createPrivateChat(user1Id, user2Id) {
-  // Проверяем существующий чат
   const existing = await findPrivateChat(user1Id, user2Id);
   if (existing) return existing;
 
-  // Создаём новый чат
   const chatResult = await pool.query(
     "INSERT INTO chats (type) VALUES ('private') RETURNING id",
   );
   const chatId = chatResult.rows[0].id;
 
-  // Добавляем участников
   await pool.query(
     "INSERT INTO chat_members (chat_id, user_id) VALUES ($1, $2)",
     [chatId, user1Id],
@@ -129,12 +125,10 @@ async function createPrivateChat(user1Id, user2Id) {
 
 async function findPrivateChat(user1Id, user2Id) {
   const result = await pool.query(
-    `
-    SELECT c.id, c.type FROM chats c
-    JOIN chat_members cm1 ON c.id = cm1.chat_id AND cm1.user_id = $1
-    JOIN chat_members cm2 ON c.id = cm2.chat_id AND cm2.user_id = $2
-    WHERE c.type = 'private'
-  `,
+    `SELECT c.id, c.type FROM chats c
+     JOIN chat_members cm1 ON c.id = cm1.chat_id AND cm1.user_id = $1
+     JOIN chat_members cm2 ON c.id = cm2.chat_id AND cm2.user_id = $2
+     WHERE c.type = 'private'`,
     [user1Id, user2Id],
   );
   return result.rows[0] || null;
@@ -163,36 +157,29 @@ async function createGroupChat(name, creatorId, memberIds) {
 
 async function getUserChats(userId) {
   const result = await pool.query(
-    `
-    SELECT c.id, c.name, c.type,
+    `SELECT c.id, c.name, c.type,
       (SELECT content FROM messages WHERE chat_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message,
       (SELECT created_at FROM messages WHERE chat_id = c.id ORDER BY created_at DESC LIMIT 1) as last_time
     FROM chats c
     JOIN chat_members cm ON c.id = cm.chat_id
     WHERE cm.user_id = $1
-    ORDER BY last_time DESC NULLS LAST
-  `,
+    ORDER BY last_time DESC NULLS LAST`,
     [userId],
   );
 
   const chats = result.rows;
-
-  // Для каждого чата получаем участников
   for (const chat of chats) {
     chat.members = await getChatMembers(chat.id);
   }
-
   return chats;
 }
 
 async function getChatMembers(chatId) {
   const result = await pool.query(
-    `
-    SELECT u.id, u.username, u.display_name
-    FROM users u
-    JOIN chat_members cm ON u.id = cm.user_id
-    WHERE cm.chat_id = $1
-  `,
+    `SELECT u.id, u.username, u.display_name
+     FROM users u
+     JOIN chat_members cm ON u.id = cm.user_id
+     WHERE cm.chat_id = $1`,
     [chatId],
   );
   return result.rows;
@@ -218,15 +205,13 @@ async function saveMessage(data) {
 
 async function getChatMessages(chatId, limit = 50, offset = 0) {
   const result = await pool.query(
-    `
-    SELECT m.id, m.content, m.type, m.created_at,
-           u.id as sender_id, u.username, u.display_name
-    FROM messages m
-    JOIN users u ON m.sender_id = u.id
-    WHERE m.chat_id = $1
-    ORDER BY m.created_at ASC
-    LIMIT $2 OFFSET $3
-  `,
+    `SELECT m.id, m.content, m.type, m.created_at,
+            u.id as sender_id, u.username, u.display_name
+     FROM messages m
+     JOIN users u ON m.sender_id = u.id
+     WHERE m.chat_id = $1
+     ORDER BY m.created_at ASC
+     LIMIT $2 OFFSET $3`,
     [chatId, limit, offset],
   );
   return result.rows;
