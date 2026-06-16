@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <title>Мессенджер</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/chat/css/chat.css" />
+    <link rel="stylesheet" href="/chat/css/settings.css" />
+    <link rel="stylesheet" href="/chat/css/modals.css" />
+  </head>
+  <body>
+    <div class="modal-overlay" id="delete-modal">
+      <div class="modal">
+        <h3>Удалить чат?</h3>
+        <p>Все сообщения будут удалены</p>
+        <div class="modal-actions">
+          <button class="modal-btn cancel" onclick="closeDeleteModal()">
+            Отмена</button
+          ><button class="modal-btn confirm" id="confirm-delete-btn">
+            Удалить
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-overlay" id="delete-msg-modal">
+      <div class="modal">
+        <h3>Удалить сообщение?</h3>
+        <p>Только у вас</p>
+        <div class="modal-actions">
+          <button class="modal-btn cancel" onclick="closeDeleteMsgModal()">
+            Отмена</button
+          ><button class="modal-btn confirm" id="confirm-delete-msg-btn">
+            Удалить
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="search-modal" id="search-modal">
+      <div class="search-modal-header">
+        <button class="icon-btn" onclick="closeSearch()">←</button
+        ><input
+          type="text"
+          id="search-modal-input"
+          placeholder="Поиск..."
+          onkeyup="searchUsersModal()"
+        />
+      </div>
+      <div class="search-results" id="search-results"></div>
+    </div>
+
+    <div class="app-header">
+      <button class="icon-btn back-btn" id="back-btn" onclick="goBack()">
+        ←
+      </button>
+      <h3 id="header-title">💬 Мессенджер</h3>
+      <button class="icon-btn" onclick="openSearch()">🔍</button>
+      <button class="icon-btn" onclick="createGroup()">👥</button>
+    </div>
+
+    <div class="main-layout">
+      <div class="chats-panel" id="chats-panel">
+        <div id="chats-list" class="chats-list"></div>
+      </div>
+      <div class="right-panel" id="right-panel">
+        <div class="empty-state" id="empty-state">Выберите чат</div>
+        <div class="chat-view" id="chat-view">
+          <div class="chat-header">
+            <h2 id="chat-title"></h2>
+            <span
+              id="typing-indicator"
+              class="typing-indicator"
+              style="display: none"
+            ></span
+            ><button
+              class="icon-btn"
+              onclick="deleteCurrentChat()"
+              style="color: var(--danger)"
+            >
+              🗑️</button
+            ><button class="icon-btn" onclick="closeChat()">✕</button>
+          </div>
+          <div class="reply-bar" id="reply-bar">
+            <span>↩</span><span id="reply-text"></span
+            ><span
+              onclick="cancelReply()"
+              style="cursor: pointer; color: var(--danger)"
+              >✕</span
+            >
+          </div>
+          <div class="edit-bar" id="edit-bar">
+            <span>✏️</span><span id="edit-text"></span
+            ><span
+              onclick="saveEdit()"
+              style="cursor: pointer; color: var(--primary); font-weight: 600"
+              >✓</span
+            ><span
+              onclick="cancelEdit()"
+              style="cursor: pointer; color: var(--danger)"
+              >✕</span
+            >
+          </div>
+          <div class="messages" id="messages"></div>
+          <div class="input-area">
+            <div class="voice-slider-container" id="voice-slider">
+              <span class="voice-slider-cancel" onclick="cancelVoice()"
+                >Отмена</span
+              ><span class="voice-slider-text">Свайп вверх для закрепления</span
+              ><span
+                class="voice-slider-lock"
+                id="voice-lock-btn"
+                onclick="toggleVoiceLock()"
+                >🔒</span
+              >
+            </div>
+            <div class="media-preview" id="media-preview"></div>
+            <div class="input-row">
+              <button
+                class="attach-btn"
+                onclick="document.getElementById('media-input').click()"
+              >
+                📎
+              </button>
+              <input
+                type="text"
+                class="msg-input"
+                id="message-input"
+                placeholder="Сообщение..."
+                onkeypress="if (event.key === 'Enter') sendMessage();"
+                oninput="handleInput()"
+              />
+              <input
+                type="file"
+                id="media-input"
+                accept="image/*,video/*,audio/*,.pdf,.doc,.txt"
+                onchange="handleMediaSelect(event)"
+                multiple
+              />
+              <button
+                class="voice-btn"
+                id="voice-btn"
+                onmousedown="startVoice(event)"
+                onmouseup="stopVoice(event)"
+                ontouchstart="startVoice(event)"
+                ontouchend="stopVoice(event)"
+                ontouchmove="moveVoice(event)"
+              >
+                🎤
+              </button>
+              <button class="send-btn" id="send-btn" onclick="sendMessage()">
+                ➤
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="settings-panel" id="settings-panel">
+          <h2>⚙️ Настройки</h2>
+          <div class="settings-section">
+            <h3>Оформление</h3>
+            <div class="setting-item">
+              <span>Тёмная тема</span
+              ><label class="toggle-switch"
+                ><input
+                  type="checkbox"
+                  id="theme-toggle"
+                  onchange="toggleTheme()"
+                  checked /><span class="toggle-slider"></span
+              ></label>
+            </div>
+          </div>
+          <div class="settings-section">
+            <h3>Профиль</h3>
+            <div class="setting-item">
+              <span>Имя</span
+              ><input type="text" id="displayname-input" /><button
+                class="save-btn"
+                onclick="updateDisplayName()"
+              >
+                ✓
+              </button>
+            </div>
+            <div class="setting-item">
+              <span>Пароль</span
+              ><input
+                type="password"
+                id="old-password"
+                placeholder="Старый"
+              /><input
+                type="password"
+                id="new-password"
+                placeholder="Новый"
+              /><button class="save-btn" onclick="updatePassword()">✓</button>
+            </div>
+          </div>
+          <div class="account-card">
+            <div class="account-row">
+              <span class="account-label">Логин</span
+              ><span id="settings-username">—</span>
+            </div>
+            <div class="account-row">
+              <span class="account-label">Имя</span
+              ><span id="settings-displayname">—</span>
+            </div>
+          </div>
+          <button class="danger-btn" onclick="logoutAll()">🚪 Выход</button>
+          <button class="danger-btn" onclick="deleteAccount()">
+            🗑️ Удалить аккаунт
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-nav visible" id="bottom-nav">
+      <div
+        class="nav-item active"
+        data-tab="chats"
+        onclick="switchTab('chats')"
+      >
+        💬 Чаты
+      </div>
+      <div class="nav-item" data-tab="settings" onclick="switchTab('settings')">
+        ⚙️ Настройки
+      </div>
+    </div>
+
+    <div id="notifications-container"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/chat/js/state.js"></script>
+    <script src="/chat/js/utils.js"></script>
+    <script src="/chat/js/socket.js"></script>
+    <script src="/chat/js/chat.js"></script>
+    <script src="/chat/js/messages.js"></script>
+    <script src="/chat/js/media.js"></script>
+    <script src="/chat/js/voice.js"></script>
+    <script src="/chat/js/settings.js"></script>
+  </body>
+</html>

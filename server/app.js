@@ -25,7 +25,7 @@ app.get("/register", (req, res) =>
   res.sendFile(path.join(__dirname, "..", "public", "register.html")),
 );
 app.get("/chat", (req, res) =>
-  res.sendFile(path.join(__dirname, "..", "public", "chat.html")),
+  res.sendFile(path.join(__dirname, "..", "public", "chat", "chat.html")),
 );
 app.use("/api/auth", authRoutes);
 
@@ -130,13 +130,12 @@ app.put("/api/messages/:id", authMiddleware, async (req, res) => {
     const members = await db.getChatMembers(msg.chat_id);
     members.forEach((member) => {
       for (let [socketId, user] of onlineUsers) {
-        if (user.id === member.id) {
+        if (user.id === member.id)
           io.to(socketId).emit("edit-message", {
             chatId: msg.chat_id,
             messageId: parseInt(req.params.id),
             content,
           });
-        }
       }
     });
     res.json({ success: true });
@@ -238,7 +237,7 @@ io.on("connection", (socket) => {
     const saved = await db.saveMessage({
       chatId: data.chatId,
       senderId: data.fromUser.id,
-      content: data.message,
+      content: data.content || data.message,
       type: data.type || "text",
       status: "sent",
       replyTo: data.replyTo,
@@ -256,7 +255,8 @@ io.on("connection", (socket) => {
           type: data.type,
           replyTo: data.replyTo,
           fileName: data.fileName,
-          status: "delivered",
+          content: data.content,
+          caption: data.caption,
         });
         recipientOnline = true;
         break;
@@ -283,7 +283,7 @@ io.on("connection", (socket) => {
     const saved = await db.saveMessage({
       chatId: data.groupId,
       senderId: data.fromUser.id,
-      content: data.message,
+      content: data.content || data.message,
       type: data.type || "text",
       status: "sent",
       replyTo: data.replyTo,
@@ -304,7 +304,8 @@ io.on("connection", (socket) => {
               type: data.type,
               replyTo: data.replyTo,
               fileName: data.fileName,
-              status: "sent",
+              content: data.content,
+              caption: data.caption,
             });
             memberOnline = true;
             break;
