@@ -21,10 +21,6 @@ async function initDB() {
       `CREATE TABLE IF NOT EXISTS messages (id SERIAL PRIMARY KEY, chat_id INTEGER REFERENCES chats(id) ON DELETE CASCADE, sender_id INTEGER REFERENCES users(id) ON DELETE CASCADE, content TEXT NOT NULL, type TEXT DEFAULT 'text', created_at TIMESTAMP DEFAULT NOW())`,
     );
     console.log("✅ База данных PostgreSQL готова");
-
-    // Проверим, есть ли пользователи
-    const count = await pool.query("SELECT COUNT(*) FROM users");
-    console.log("📊 Количество пользователей в БД:", count.rows[0].count);
   } catch (error) {
     console.error("Ошибка инициализации БД:", error);
   }
@@ -32,34 +28,18 @@ async function initDB() {
 initDB();
 
 async function createUser(username, hashedPassword, displayName) {
-  console.log("➕ Создание пользователя:", username);
   const result = await pool.query(
     "INSERT INTO users (username, password, display_name) VALUES ($1, $2, $3) RETURNING id, username, display_name",
     [username, hashedPassword, displayName || username],
   );
-  console.log("✅ Пользователь создан:", result.rows[0]);
   return result.rows[0];
 }
 
 async function findUserByUsername(username) {
-  console.log("🔍 Поиск пользователя:", username);
   const result = await pool.query("SELECT * FROM users WHERE username = $1", [
     username,
   ]);
-  console.log(
-    "📊 Результат запроса — rows.length:",
-    result.rows.length,
-    "| rows[0]:",
-    result.rows[0],
-  );
-
-  if (!result.rows || result.rows.length === 0) {
-    console.log("✅ Пользователь НЕ найден, возвращаю null");
-    return null;
-  }
-
-  console.log("⚠️ Пользователь НАЙДЕН:", result.rows[0]);
-  return result.rows[0];
+  return result.rows[0] || null;
 }
 
 async function findUserById(id) {

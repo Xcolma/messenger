@@ -7,61 +7,32 @@ const JWT_SECRET = "messenger-secret-key-2024-change-me";
 
 router.post("/register", async (req, res) => {
   const { username, password, displayName } = req.body;
-  console.log("📝 ПОПЫТКА РЕГИСТРАЦИИ:", {
-    username,
-    password: password ? "***" : "ОТСУТСТВУЕТ",
-    displayName,
-  });
-
-  if (!username || !password) {
-    console.log("❌ Отказ: пустой логин или пароль");
+  if (!username || !password)
     return res
       .status(400)
       .json({ success: false, message: "Логин и пароль обязательны" });
-  }
-
-  if (username.length < 3) {
-    console.log("❌ Отказ: короткий логин");
+  if (username.length < 3)
     return res
       .status(400)
       .json({
         success: false,
         message: "Логин должен быть не менее 3 символов",
       });
-  }
-
-  if (password.length < 4) {
-    console.log("❌ Отказ: короткий пароль");
+  if (password.length < 4)
     return res
       .status(400)
       .json({
         success: false,
         message: "Пароль должен быть не менее 4 символов",
       });
-  }
-
-  console.log("🔍 Проверка существования пользователя...");
   const existingUser = await db.findUserByUsername(username);
-  console.log(
-    "📊 Результат existingUser:",
-    existingUser,
-    "| Тип:",
-    typeof existingUser,
-    "| Boolean:",
-    !!existingUser,
-  );
-
-  if (existingUser) {
-    console.log("❌ ПОЛЬЗОВАТЕЛЬ СУЩЕСТВУЕТ!");
+  if (existingUser)
     return res
       .status(400)
       .json({
         success: false,
         message: "Пользователь с таким логином уже существует",
       });
-  }
-
-  console.log("✅ Пользователь не найден, создаём нового...");
   const hashedPassword = bcrypt.hashSync(password, 10);
   const user = await db.createUser(username, hashedPassword, displayName);
   const token = jwt.sign(
@@ -69,8 +40,6 @@ router.post("/register", async (req, res) => {
     JWT_SECRET,
     { expiresIn: "7d" },
   );
-
-  console.log("🎉 РЕГИСТРАЦИЯ УСПЕШНА:", user);
   res
     .status(201)
     .json({
