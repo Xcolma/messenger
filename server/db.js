@@ -1,258 +1,252 @@
 // ============================================
-// БАЗА ДАННЫХ
-// Здесь хранятся пользователи, чаты и сообщения
-// SQLite — база данных в одном файле messenger.db
+// БАЗА ДАННЫХ POSTGRESQL
 // ============================================
 
-// Подключаем библиотеку (уже установлена)
-const Database = require("better-sqlite3");
-const path = require("path");
+const { Pool } = require("pg");
 
-// Создаём или открываем файл базы данных
-const db = new Database(path.join(__dirname, "..", "messenger.db"));
+// Подключение к базе данных
+const pool = new Pool({
+  connectionString:
+    process.env.DATABASE_URL || "postgresql://localhost:5432/messenger",
+  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
+});
 
-// Включаем поддержку внешних ключей (связи между таблицами)
-db.pragma("journal_mode = WAL"); // Быстрая запись
-db.pragma("foreign_keys = ON"); // Связи между таблицами
+// Создание таблиц при запуске
+async function initDB() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        username TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL,
+        display_name TEXT,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
 
-// ============================================
-// СОЗДАНИЕ ТАБЛИЦ (если их ещё нет)
-// ============================================
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS chats (
+        id SERIAL PRIMARY KEY,
+        name TEXT,
+        type TEXT NOT NULL DEFAULT 'private',
+        created_by INTEGER REFERENCES users(id),
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
 
-// Таблица пользователей
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE NOT NULL,     -- Логин (уникальный)
-    password TEXT NOT NULL,            -- Пароль (будет храниться в зашифрованном виде)
-    display_name TEXT,                 -- Отображаемое имя
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )
-`);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS chat_members (
+        chat_id INTEGER REFERENCES chats(id) ON DELETE CASCADE,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        joined_at TIMESTAMP DEFAULT NOW(),
+        PRIMARY KEY (chat_id, user_id)
+      )
+    `);
 
-// Таблица чатов (может быть личным или групповым)
-db.exec(`
-  CREATE TABLE IF NOT EXISTS chats (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT,                         -- Название (для групп, для личных — NULL)
-    type TEXT NOT NULL DEFAULT 'private',  -- 'private' или 'group'
-    created_by INTEGER,                -- Кто создал чат
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (created_by) REFERENCES users(id)
-  )
-`);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS messages (
+        id SERIAL PRIMARY KEY,
+        chat_id INTEGER REFERENCES chats(id) ON DELETE CASCADE,
+        sender_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        content TEXT NOT NULL,
+        type TEXT DEFAULT 'text',
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
 
-// Таблица участников чата (кто в каком чате состоит)
-db.exec(`
-  CREATE TABLE IF NOT EXISTS chat_members (
-    chat_id INTEGER NOT NULL,
-    user_id INTEGER NOT NULL,
-    joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (chat_id, user_id),
-    FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-  )
-`);
+    console.log("✅ База данных PostgreSQL готова");
+  } catch (error) {
+    console.error("Ошибка инициализации БД:", error);
+  }
+}
 
-// Таблица сообщений
-db.exec(`
-  CREATE TABLE IF NOT EXISTS messages (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    chat_id INTEGER NOT NULL,
-    sender_id INTEGER NOT NULL,
-    content TEXT NOT NULL,             -- Текст сообщения
-    type TEXT DEFAULT 'text',          -- Тип: 'text', 'image' и т.д.
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE,
-    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
-  )
-`);
+// Запускаем инициализацию
+initDB();
 
 // ============================================
-// ФУНКЦИИ ДЛЯ РАБОТЫ С БАЗОЙ ДАННЫХ
-// Каждая функция — отдельная операция
+// ФУНКЦИИ ДЛЯ РАБОТЫ С БД
 // ============================================
 
 // --- ПОЛЬЗОВАТЕЛИ ---
 
-// Создать нового пользователя
 function createUser(username, hashedPassword, displayName) {
-  const stmt = db.prepare(
-    "INSERT INTO users (username, password, display_name) VALUES (?, ?, ?)",
-  );
-  const result = stmt.run(username, hashedPassword, displayName || username);
-  return {
-    id: result.lastInsertRowid,
+  return pool
+    .query(
+      "INSERT INTO users (username, password, display_name) VALUES ($1, $2, $3) RETURNING id, username, display_name",
+      [username, hashedPassword, displayName || username],
+    )
+    .then((result) => result.rows[0]);
+}
+
+async function findUserByUsername(username) {
+  const result = await pool.query("SELECT * FROM users WHERE username = $1", [
     username,
-    displayName: displayName || username,
-  };
+  ]);
+  return result.rows[0] || null;
 }
 
-// Найти пользователя по логину
-function findUserByUsername(username) {
-  const stmt = db.prepare("SELECT * FROM users WHERE username = ?");
-  return stmt.get(username);
-}
-
-// Найти пользователя по ID
-function findUserById(id) {
-  const stmt = db.prepare(
-    "SELECT id, username, display_name, created_at FROM users WHERE id = ?",
+async function findUserById(id) {
+  const result = await pool.query(
+    "SELECT id, username, display_name, created_at FROM users WHERE id = $1",
+    [id],
   );
-  return stmt.get(id);
+  return result.rows[0] || null;
 }
 
-// Поиск пользователей по части имени
-function searchUsers(query, currentUserId) {
-  const stmt = db.prepare(
-    "SELECT id, username, display_name FROM users WHERE (username LIKE ? OR display_name LIKE ?) AND id != ? LIMIT 20",
+async function searchUsers(query, currentUserId) {
+  const result = await pool.query(
+    "SELECT id, username, display_name FROM users WHERE (username ILIKE $1 OR display_name ILIKE $1) AND id != $2 LIMIT 20",
+    [`%${query}%`, currentUserId],
   );
-  const searchTerm = `%${query}%`;
-  return stmt.all(searchTerm, searchTerm, currentUserId);
+  return result.rows;
 }
 
 // --- ЧАТЫ ---
 
-// Создать личный чат между двумя пользователями
-function createPrivateChat(user1Id, user2Id) {
-  // Проверяем, есть ли уже чат между этими пользователями
-  const existingChat = findPrivateChat(user1Id, user2Id);
-  if (existingChat) return existingChat;
+async function createPrivateChat(user1Id, user2Id) {
+  // Проверяем существующий чат
+  const existing = await findPrivateChat(user1Id, user2Id);
+  if (existing) return existing;
 
   // Создаём новый чат
-  const stmt = db.prepare("INSERT INTO chats (type) VALUES (?)");
-  const result = stmt.run("private");
-  const chatId = result.lastInsertRowid;
+  const chatResult = await pool.query(
+    "INSERT INTO chats (type) VALUES ('private') RETURNING id",
+  );
+  const chatId = chatResult.rows[0].id;
 
-  // Добавляем обоих пользователей в чат
-  addChatMember(chatId, user1Id);
-  addChatMember(chatId, user2Id);
+  // Добавляем участников
+  await pool.query(
+    "INSERT INTO chat_members (chat_id, user_id) VALUES ($1, $2)",
+    [chatId, user1Id],
+  );
+  await pool.query(
+    "INSERT INTO chat_members (chat_id, user_id) VALUES ($1, $2)",
+    [chatId, user2Id],
+  );
 
   return { id: chatId, type: "private" };
 }
 
-// Найти личный чат между двумя пользователями
-function findPrivateChat(user1Id, user2Id) {
-  const stmt = db.prepare(`
+async function findPrivateChat(user1Id, user2Id) {
+  const result = await pool.query(
+    `
     SELECT c.id, c.type FROM chats c
-    JOIN chat_members cm1 ON c.id = cm1.chat_id AND cm1.user_id = ?
-    JOIN chat_members cm2 ON c.id = cm2.chat_id AND cm2.user_id = ?
+    JOIN chat_members cm1 ON c.id = cm1.chat_id AND cm1.user_id = $1
+    JOIN chat_members cm2 ON c.id = cm2.chat_id AND cm2.user_id = $2
     WHERE c.type = 'private'
-  `);
-  return stmt.get(user1Id, user2Id);
+  `,
+    [user1Id, user2Id],
+  );
+  return result.rows[0] || null;
 }
 
-// Создать групповой чат
-function createGroupChat(name, creatorId, memberIds) {
-  const stmt = db.prepare(
-    "INSERT INTO chats (name, type, created_by) VALUES (?, ?, ?)",
+async function createGroupChat(name, creatorId, memberIds) {
+  const result = await pool.query(
+    "INSERT INTO chats (name, type, created_by) VALUES ($1, 'group', $2) RETURNING id",
+    [name, creatorId],
   );
-  const result = stmt.run(name, "group", creatorId);
-  const chatId = result.lastInsertRowid;
+  const chatId = result.rows[0].id;
 
-  // Добавляем создателя и всех участников
-  addChatMember(chatId, creatorId);
-  memberIds.forEach((id) => addChatMember(chatId, id));
+  await pool.query(
+    "INSERT INTO chat_members (chat_id, user_id) VALUES ($1, $2)",
+    [chatId, creatorId],
+  );
+  for (const id of memberIds) {
+    await pool.query(
+      "INSERT INTO chat_members (chat_id, user_id) VALUES ($1, $2)",
+      [chatId, id],
+    );
+  }
 
   return { id: chatId, name, type: "group" };
 }
 
-// Добавить участника в чат
-function addChatMember(chatId, userId) {
-  const stmt = db.prepare(
-    "INSERT OR IGNORE INTO chat_members (chat_id, user_id) VALUES (?, ?)",
-  );
-  stmt.run(chatId, userId);
-}
-
-// Получить все чаты пользователя
-function getUserChats(userId) {
-  const stmt = db.prepare(`
+async function getUserChats(userId) {
+  const result = await pool.query(
+    `
     SELECT c.id, c.name, c.type,
       (SELECT content FROM messages WHERE chat_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message,
       (SELECT created_at FROM messages WHERE chat_id = c.id ORDER BY created_at DESC LIMIT 1) as last_time
     FROM chats c
     JOIN chat_members cm ON c.id = cm.chat_id
-    WHERE cm.user_id = ?
-    ORDER BY last_time DESC
-  `);
-  const chats = stmt.all(userId);
+    WHERE cm.user_id = $1
+    ORDER BY last_time DESC NULLS LAST
+  `,
+    [userId],
+  );
 
-  // Для каждого чата получаем список участников
-  return chats.map((chat) => {
-    chat.members = getChatMembers(chat.id);
-    return chat;
-  });
+  const chats = result.rows;
+
+  // Для каждого чата получаем участников
+  for (const chat of chats) {
+    chat.members = await getChatMembers(chat.id);
+  }
+
+  return chats;
 }
 
-// Получить участников чата
-function getChatMembers(chatId) {
-  const stmt = db.prepare(`
+async function getChatMembers(chatId) {
+  const result = await pool.query(
+    `
     SELECT u.id, u.username, u.display_name
     FROM users u
     JOIN chat_members cm ON u.id = cm.user_id
-    WHERE cm.chat_id = ?
-  `);
-  return stmt.all(chatId);
+    WHERE cm.chat_id = $1
+  `,
+    [chatId],
+  );
+  return result.rows;
 }
 
-// Получить ID участников группы
-function getGroupMembers(chatId) {
-  const stmt = db.prepare(
-    "SELECT user_id as id FROM chat_members WHERE chat_id = ?",
+async function getGroupMembers(chatId) {
+  const result = await pool.query(
+    "SELECT user_id as id FROM chat_members WHERE chat_id = $1",
+    [chatId],
   );
-  return stmt.all(chatId);
+  return result.rows;
 }
 
 // --- СООБЩЕНИЯ ---
 
-// Сохранить сообщение
-function saveMessage(data) {
-  const stmt = db.prepare(
-    "INSERT INTO messages (chat_id, sender_id, content, type) VALUES (?, ?, ?, ?)",
+async function saveMessage(data) {
+  const result = await pool.query(
+    "INSERT INTO messages (chat_id, sender_id, content, type) VALUES ($1, $2, $3, $4) RETURNING id",
+    [data.chatId, data.senderId, data.content, data.type || "text"],
   );
-  const result = stmt.run(
-    data.chatId,
-    data.senderId,
-    data.content,
-    data.type || "text",
-  );
-  return { id: result.lastInsertRowid, ...data };
+  return { id: result.rows[0].id, ...data };
 }
 
-// Получить историю сообщений чата
-function getChatMessages(chatId, limit = 50, offset = 0) {
-  const stmt = db.prepare(`
+async function getChatMessages(chatId, limit = 50, offset = 0) {
+  const result = await pool.query(
+    `
     SELECT m.id, m.content, m.type, m.created_at,
            u.id as sender_id, u.username, u.display_name
     FROM messages m
     JOIN users u ON m.sender_id = u.id
-    WHERE m.chat_id = ?
-    ORDER BY m.created_at DESC
-    LIMIT ? OFFSET ?
-  `);
-  // Возвращаем в обратном порядке (старые сверху)
-  return stmt.all(chatId, limit, offset).reverse();
+    WHERE m.chat_id = $1
+    ORDER BY m.created_at ASC
+    LIMIT $2 OFFSET $3
+  `,
+    [chatId, limit, offset],
+  );
+  return result.rows;
 }
 
 // ============================================
-// ЭКСПОРТ (делаем функции доступными для других файлов)
+// ЭКСПОРТ
 // ============================================
 
 module.exports = {
-  // Пользователи
   createUser,
   findUserByUsername,
   findUserById,
   searchUsers,
-  // Чаты
   createPrivateChat,
   findPrivateChat,
   createGroupChat,
   getUserChats,
   getChatMembers,
   getGroupMembers,
-  // Сообщения
   saveMessage,
   getChatMessages,
 };
