@@ -147,6 +147,22 @@ async function getChatMessages(chatId, limit = 50, offset = 0) {
   return result.rows;
 }
 
+async function deleteChat(chatId, userId) {
+  const members = await getChatMembers(chatId);
+  const isMember = members.some((m) => m.id === userId);
+  if (!isMember) throw new Error("Нет доступа");
+  await pool.query("DELETE FROM messages WHERE chat_id = $1", [chatId]);
+  await pool.query("DELETE FROM chat_members WHERE chat_id = $1", [chatId]);
+  await pool.query("DELETE FROM chats WHERE id = $1", [chatId]);
+}
+
+async function deleteUser(id) {
+  await pool.query("DELETE FROM messages WHERE sender_id = $1", [id]);
+  await pool.query("DELETE FROM chat_members WHERE user_id = $1", [id]);
+  await pool.query("DELETE FROM chats WHERE created_by = $1", [id]);
+  await pool.query("DELETE FROM users WHERE id = $1", [id]);
+}
+
 module.exports = {
   createUser,
   findUserByUsername,
@@ -160,4 +176,6 @@ module.exports = {
   getGroupMembers,
   saveMessage,
   getChatMessages,
+  deleteChat,
+  deleteUser,
 };

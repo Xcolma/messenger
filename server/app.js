@@ -90,6 +90,15 @@ app.post("/api/chats", authMiddleware, async (req, res) => {
   }
 });
 
+app.delete("/api/chats/:id", authMiddleware, async (req, res) => {
+  try {
+    await db.deleteChat(req.params.id, req.userId);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 app.get("/api/chats/:id/messages", authMiddleware, async (req, res) => {
   try {
     const messages = await db.getChatMessages(req.params.id);
@@ -99,7 +108,6 @@ app.get("/api/chats/:id/messages", authMiddleware, async (req, res) => {
   }
 });
 
-// Push subscription endpoint
 app.post("/api/push/subscribe", authMiddleware, (req, res) => {
   const subscription = req.body;
   push.addSubscription(req.userId, subscription);
@@ -129,7 +137,6 @@ io.on("connection", (socket) => {
       content: data.message,
       type: "private",
     });
-
     let recipientOnline = false;
     for (let [socketId, user] of onlineUsers) {
       if (user.id === data.toUserId) {
@@ -143,8 +150,6 @@ io.on("connection", (socket) => {
         break;
       }
     }
-
-    // Если получатель не онлайн - отправить push
     if (!recipientOnline) {
       push.sendPushNotification(
         data.toUserId,
@@ -154,7 +159,6 @@ io.on("connection", (socket) => {
         "private",
       );
     }
-
     socket.emit("message-sent", {
       message: data.message,
       timestamp: new Date().toISOString(),

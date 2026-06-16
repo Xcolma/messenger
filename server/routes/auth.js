@@ -112,4 +112,19 @@ router.get("/search", async (req, res) => {
   res.json({ success: true, users: await db.searchUsers(q, userId) });
 });
 
+router.delete("/delete", async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader)
+    return res
+      .status(401)
+      .json({ success: false, message: "Токен не предоставлен" });
+  try {
+    const decoded = jwt.verify(authHeader.split(" ")[1], JWT_SECRET);
+    await db.deleteUser(decoded.userId);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(401).json({ success: false, message: "Токен недействителен" });
+  }
+});
+
 module.exports = router;

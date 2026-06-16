@@ -30,6 +30,8 @@
         --msg-sent: linear-gradient(135deg, #8b5cf6, #6366f1);
         --msg-received: #1e1e1e;
         --online: #4ade80;
+        --danger: #ef4444;
+        --danger-glow: rgba(239, 68, 68, 0.3);
       }
 
       .light-theme {
@@ -67,11 +69,18 @@
         color: var(--text);
         height: 100vh;
         display: flex;
+        flex-direction: column;
         transition: all 0.5s ease;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .app-container {
+        display: flex;
+        flex: 1;
         overflow: hidden;
       }
 
-      /* Сайдбар */
       .sidebar {
         width: 380px;
         min-width: 380px;
@@ -101,11 +110,6 @@
         background-clip: text;
       }
 
-      .sidebar-header .actions {
-        display: flex;
-        gap: 8px;
-      }
-
       .icon-btn {
         background: var(--input-bg);
         border: 1px solid var(--border);
@@ -119,12 +123,19 @@
         align-items: center;
         justify-content: center;
         transition: all 0.3s ease;
+        position: relative;
       }
 
       .icon-btn:hover {
         border-color: var(--primary);
         box-shadow: 0 0 15px var(--primary-glow);
         transform: scale(1.05);
+      }
+
+      .icon-btn.danger:hover {
+        border-color: var(--danger);
+        box-shadow: 0 0 15px var(--danger-glow);
+        background: rgba(239, 68, 68, 0.1);
       }
 
       .search-box {
@@ -173,6 +184,37 @@
         align-items: center;
         gap: 12px;
         animation: slideIn 0.3s ease;
+        position: relative;
+      }
+
+      .chat-item:hover .delete-chat-btn {
+        opacity: 1;
+      }
+
+      .delete-chat-btn {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        opacity: 0;
+        background: rgba(239, 68, 68, 0.2);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: var(--danger);
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        z-index: 5;
+      }
+
+      .delete-chat-btn:hover {
+        background: rgba(239, 68, 68, 0.4);
+        transform: translateY(-50%) scale(1.1);
       }
 
       @keyframes slideIn {
@@ -192,7 +234,6 @@
       }
 
       .chat-item.active {
-        background: var(--primary);
         background: var(--gradient);
         box-shadow: 0 4px 15px var(--primary-glow);
       }
@@ -200,6 +241,10 @@
       .chat-item.active .chat-name,
       .chat-item.active .chat-last {
         color: white;
+      }
+
+      .chat-item.active .delete-chat-btn {
+        opacity: 0.8;
       }
 
       .chat-avatar {
@@ -247,29 +292,6 @@
         box-shadow: 0 0 10px var(--online);
       }
 
-      .sidebar-footer {
-        padding: 16px 20px;
-        border-top: 1px solid var(--border);
-      }
-
-      .logout-btn {
-        width: 100%;
-        padding: 12px;
-        background: rgba(239, 68, 68, 0.1);
-        border: 1px solid rgba(239, 68, 68, 0.3);
-        color: #ef4444;
-        border-radius: 12px;
-        cursor: pointer;
-        font-weight: 600;
-        transition: all 0.3s ease;
-      }
-
-      .logout-btn:hover {
-        background: rgba(239, 68, 68, 0.2);
-        box-shadow: 0 0 15px rgba(239, 68, 68, 0.2);
-      }
-
-      /* Главная область */
       .main {
         flex: 1;
         display: flex;
@@ -325,6 +347,11 @@
       .chat-header h2 {
         font-size: 18px;
         font-weight: 600;
+      }
+
+      .chat-header .header-actions {
+        display: flex;
+        gap: 8px;
       }
 
       .messages {
@@ -438,7 +465,188 @@
         transform: scale(1.02);
       }
 
-      /* Уведомления */
+      .bottom-nav {
+        display: flex;
+        background: var(--surface);
+        border-top: 1px solid var(--border);
+        padding: 8px 20px;
+        gap: 8px;
+        z-index: 20;
+      }
+
+      .nav-item {
+        flex: 1;
+        padding: 12px;
+        border-radius: 12px;
+        cursor: pointer;
+        text-align: center;
+        font-weight: 500;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        color: var(--text2);
+        border: 2px solid transparent;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      .nav-item:hover {
+        background: var(--surface2);
+        color: var(--text);
+      }
+
+      .nav-item.active {
+        background: var(--gradient);
+        color: white;
+        border-color: transparent;
+        box-shadow: 0 4px 15px var(--primary-glow);
+      }
+
+      .nav-item .nav-icon {
+        font-size: 18px;
+      }
+
+      .settings-panel {
+        display: none;
+        padding: 24px;
+        flex: 1;
+        overflow-y: auto;
+        background: var(--surface);
+      }
+
+      .settings-panel.active {
+        display: block;
+      }
+
+      .settings-panel h2 {
+        font-size: 24px;
+        margin-bottom: 24px;
+        background: var(--gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .settings-section {
+        margin-bottom: 32px;
+      }
+
+      .settings-section h3 {
+        font-size: 16px;
+        margin-bottom: 16px;
+        color: var(--text2);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 600;
+      }
+
+      .setting-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px;
+        background: var(--surface2);
+        border-radius: 12px;
+        margin-bottom: 8px;
+        transition: all 0.3s ease;
+      }
+
+      .setting-item:hover {
+        background: var(--input-bg);
+      }
+
+      .setting-item .setting-info h4 {
+        font-size: 15px;
+        margin-bottom: 4px;
+      }
+
+      .setting-item .setting-info p {
+        font-size: 13px;
+        color: var(--text2);
+      }
+
+      .toggle-switch {
+        position: relative;
+        width: 52px;
+        height: 28px;
+        flex-shrink: 0;
+      }
+
+      .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+
+      .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #333;
+        transition: 0.3s;
+        border-radius: 28px;
+      }
+
+      .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 22px;
+        width: 22px;
+        left: 3px;
+        bottom: 3px;
+        background: white;
+        transition: 0.3s;
+        border-radius: 50%;
+      }
+
+      input:checked + .toggle-slider {
+        background: var(--primary);
+      }
+
+      input:checked + .toggle-slider:before {
+        transform: translateX(24px);
+      }
+
+      .danger-btn {
+        width: 100%;
+        padding: 14px;
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: var(--danger);
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 15px;
+        transition: all 0.3s ease;
+        margin-top: 16px;
+      }
+
+      .danger-btn:hover {
+        background: rgba(239, 68, 68, 0.2);
+        box-shadow: 0 0 20px var(--danger-glow);
+      }
+
+      .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+      }
+
+      .info-item span:first-child {
+        color: var(--text2);
+        font-size: 14px;
+      }
+
+      .info-item span:last-child {
+        font-weight: 500;
+        font-size: 14px;
+      }
+
       #notifications-container {
         position: fixed;
         top: 20px;
@@ -513,36 +721,87 @@
         transition: all 0.3s ease;
       }
 
-      .notification-toast .close-btn:hover {
-        color: var(--text);
-      }
-
-      .theme-toggle {
+      .modal-overlay {
+        display: none;
         position: fixed;
-        bottom: 20px;
-        right: 20px;
-        z-index: 100;
-        background: var(--surface);
-        border: 2px solid var(--border);
-        border-radius: 50%;
-        width: 48px;
-        height: 48px;
-        cursor: pointer;
-        font-size: 24px;
-        display: flex;
-        align-items: center;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 300;
         justify-content: center;
-        transition: all 0.3s ease;
-        color: var(--text);
+        align-items: center;
+        backdrop-filter: blur(4px);
+      }
+
+      .modal-overlay.active {
+        display: flex;
+      }
+
+      .modal {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 32px;
+        max-width: 400px;
+        width: 90%;
         box-shadow: var(--shadow);
+        animation: fadeInUp 0.3s ease;
       }
 
-      .theme-toggle:hover {
-        box-shadow: 0 0 20px var(--primary-glow);
-        transform: rotate(180deg);
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
       }
 
-      /* Мобильное меню */
+      .modal h3 {
+        margin-bottom: 12px;
+        font-size: 18px;
+      }
+
+      .modal p {
+        color: var(--text2);
+        margin-bottom: 24px;
+        font-size: 14px;
+      }
+
+      .modal-actions {
+        display: flex;
+        gap: 12px;
+      }
+
+      .modal-btn {
+        flex: 1;
+        padding: 12px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+        font-size: 14px;
+      }
+
+      .modal-btn.cancel {
+        background: var(--input-bg);
+        color: var(--text);
+      }
+
+      .modal-btn.confirm {
+        background: var(--danger);
+        color: white;
+      }
+
+      .modal-btn:hover {
+        transform: scale(1.02);
+      }
+
       .mobile-toggle {
         display: none;
         position: fixed;
@@ -561,7 +820,6 @@
         justify-content: center;
       }
 
-      /* Адаптивность */
       @media (max-width: 768px) {
         .sidebar {
           position: fixed;
@@ -595,18 +853,40 @@
           min-width: auto;
           width: calc(100vw - 40px);
         }
+
+        .bottom-nav {
+          padding: 8px 12px;
+        }
+
+        .nav-item {
+          font-size: 12px;
+          padding: 10px 8px;
+        }
       }
     </style>
   </head>
   <body>
-    <!-- Мобильная кнопка -->
     <button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
 
-    <!-- Сайдбар -->
-    <div class="sidebar" id="sidebar">
-      <div class="sidebar-header">
-        <h3>💬 Мессенджер</h3>
-        <div class="actions">
+    <div class="modal-overlay" id="delete-modal">
+      <div class="modal">
+        <h3>Удалить чат?</h3>
+        <p>Все сообщения в этом чате будут удалены безвозвратно</p>
+        <div class="modal-actions">
+          <button class="modal-btn cancel" onclick="closeDeleteModal()">
+            Отмена
+          </button>
+          <button class="modal-btn confirm" id="confirm-delete-btn">
+            Удалить
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="app-container">
+      <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <h3>💬 Чаты</h3>
           <button
             class="icon-btn"
             onclick="createGroup()"
@@ -614,52 +894,124 @@
           >
             👥
           </button>
-          <button class="icon-btn" onclick="toggleTheme()" title="Сменить тему">
-            🌓
-          </button>
         </div>
-      </div>
-      <div class="search-box">
-        <input
-          type="text"
-          id="search-input"
-          placeholder="🔍 Поиск пользователей..."
-          onkeyup="searchUsers()"
-        />
-      </div>
-      <div id="chats-list" class="chats-list"></div>
-      <div class="sidebar-footer">
-        <button class="logout-btn" onclick="logout()">
-          🚪 Выйти из аккаунта
-        </button>
-      </div>
-    </div>
-
-    <!-- Главная область -->
-    <div class="main">
-      <div id="empty-chat" class="empty-chat">
-        <div class="icon">💭</div>
-        <p>Выберите чат или создайте новый</p>
-      </div>
-      <div id="chat-view" class="chat-view">
-        <div class="chat-header">
-          <h2 id="chat-title"></h2>
-          <button class="icon-btn" onclick="closeChat()">✕</button>
-        </div>
-        <div id="messages" class="messages"></div>
-        <div class="message-input">
+        <div class="search-box">
           <input
             type="text"
-            id="message-input"
-            placeholder="Напишите сообщение..."
-            onkeypress="if (event.key === 'Enter') sendMessage();"
+            id="search-input"
+            placeholder="🔍 Поиск пользователей..."
+            onkeyup="searchUsers()"
           />
-          <button class="send-btn" onclick="sendMessage()">➤</button>
+        </div>
+        <div id="chats-list" class="chats-list"></div>
+      </div>
+
+      <div class="main" id="main-area">
+        <div id="empty-chat" class="empty-chat">
+          <div class="icon">💭</div>
+          <p>Выберите чат или создайте новый</p>
+        </div>
+        <div id="chat-view" class="chat-view">
+          <div class="chat-header">
+            <h2 id="chat-title"></h2>
+            <div class="header-actions">
+              <button
+                class="icon-btn danger"
+                onclick="deleteCurrentChat()"
+                title="Удалить чат"
+              >
+                🗑️
+              </button>
+              <button class="icon-btn" onclick="closeChat()">✕</button>
+            </div>
+          </div>
+          <div id="messages" class="messages"></div>
+          <div class="message-input">
+            <input
+              type="text"
+              id="message-input"
+              placeholder="Напишите сообщение..."
+              onkeypress="if (event.key === 'Enter') sendMessage();"
+            />
+            <button class="send-btn" onclick="sendMessage()">➤</button>
+          </div>
+        </div>
+        <div id="settings-panel" class="settings-panel">
+          <h2>⚙️ Настройки</h2>
+
+          <div class="settings-section">
+            <h3>Оформление</h3>
+            <div class="setting-item">
+              <div class="setting-info">
+                <h4>Тёмная тема</h4>
+                <p>Переключить на светлую тему</p>
+              </div>
+              <label class="toggle-switch">
+                <input
+                  type="checkbox"
+                  id="theme-toggle"
+                  onchange="toggleTheme()"
+                  checked
+                />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h3>Уведомления</h3>
+            <div class="setting-item">
+              <div class="setting-info">
+                <h4>Push-уведомления</h4>
+                <p>Получать уведомления даже когда сайт закрыт</p>
+              </div>
+              <label class="toggle-switch">
+                <input
+                  type="checkbox"
+                  id="push-toggle"
+                  onchange="togglePushNotifications()"
+                  checked
+                />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h3>Аккаунт</h3>
+            <div class="setting-item">
+              <div class="info-item">
+                <span>Имя пользователя</span>
+                <span id="settings-username"></span>
+              </div>
+            </div>
+            <div class="setting-item">
+              <div class="info-item">
+                <span>Отображаемое имя</span>
+                <span id="settings-displayname"></span>
+              </div>
+            </div>
+            <button class="danger-btn" onclick="deleteAccount()">
+              🗑️ Удалить аккаунт
+            </button>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Уведомления -->
+    <div class="bottom-nav">
+      <div
+        class="nav-item active"
+        data-tab="chats"
+        onclick="switchTab('chats')"
+      >
+        <span class="nav-icon">💬</span> Чаты
+      </div>
+      <div class="nav-item" data-tab="settings" onclick="switchTab('settings')">
+        <span class="nav-icon">⚙️</span> Настройки
+      </div>
+    </div>
+
     <div id="notifications-container"></div>
 
     <script src="/socket.io/socket.io.js"></script>
@@ -675,11 +1027,15 @@
       let currentChat = null;
       let chats = [];
       let onlineUserIds = new Set();
+      let currentTab = "chats";
+      let chatToDelete = null;
+      let pushEnabled = true;
 
-      // Темы
       const savedTheme = localStorage.getItem("theme");
-      if (savedTheme === "light") {
+      const isLight = savedTheme === "light";
+      if (isLight) {
         document.body.classList.add("light-theme");
+        document.getElementById("theme-toggle").checked = false;
       }
 
       function toggleTheme() {
@@ -690,12 +1046,54 @@
         );
       }
 
-      // Сайдбар для мобильных
+      function switchTab(tab) {
+        currentTab = tab;
+        document
+          .querySelectorAll(".nav-item")
+          .forEach((el) => el.classList.remove("active"));
+        document.querySelector(`[data-tab="${tab}"]`).classList.add("active");
+
+        if (tab === "chats") {
+          document.getElementById("empty-chat").style.display = currentChat
+            ? "none"
+            : "flex";
+          document
+            .getElementById("chat-view")
+            .classList.toggle("active", !!currentChat);
+          document.getElementById("settings-panel").classList.remove("active");
+          document.getElementById("sidebar").style.display = "flex";
+        } else if (tab === "settings") {
+          document.getElementById("empty-chat").style.display = "none";
+          document.getElementById("chat-view").classList.remove("active");
+          document.getElementById("settings-panel").classList.add("active");
+          document.getElementById("sidebar").style.display = "none";
+          loadSettings();
+        }
+      }
+
+      function loadSettings() {
+        document.getElementById("settings-username").textContent =
+          currentUser.username;
+        document.getElementById("settings-displayname").textContent =
+          currentUser.displayName || currentUser.username;
+      }
+
+      function togglePushNotifications() {
+        pushEnabled = document.getElementById("push-toggle").checked;
+        if (pushEnabled) {
+          subscribeToPush();
+        } else {
+          fetch("/api/push/unsubscribe", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+          });
+        }
+      }
+
       function toggleSidebar() {
         document.getElementById("sidebar").classList.toggle("open");
       }
 
-      // Уведомления
       function showNotification(
         title,
         message,
@@ -728,7 +1126,6 @@
         }, 5000);
       }
 
-      // Push уведомления
       async function subscribeToPush() {
         if (!("serviceWorker" in navigator) || !("PushManager" in window))
           return;
@@ -809,6 +1206,7 @@
               <div class="chat-last">${chat.last_message || "Нет сообщений"}</div>
             </div>
             ${isOnline ? '<div class="online-dot"></div>' : ""}
+            <button class="delete-chat-btn" onclick="event.stopPropagation(); confirmDeleteChat(${chat.id})" title="Удалить чат">✕</button>
           </div>
         `;
           })
@@ -820,11 +1218,13 @@
         if (!currentChat) return;
         document.getElementById("empty-chat").style.display = "none";
         document.getElementById("chat-view").classList.add("active");
+        document.getElementById("settings-panel").classList.remove("active");
         document.getElementById("chat-title").textContent =
           getChatName(currentChat);
         loadMessages(chatId);
         renderChats();
         if (window.innerWidth < 768) toggleSidebar();
+        switchTab("chats");
       }
 
       async function loadMessages(chatId) {
@@ -882,6 +1282,55 @@
         document.getElementById("empty-chat").style.display = "flex";
         document.getElementById("chat-view").classList.remove("active");
         renderChats();
+      }
+
+      function confirmDeleteChat(chatId) {
+        chatToDelete = chatId;
+        document.getElementById("delete-modal").classList.add("active");
+        document.getElementById("confirm-delete-btn").onclick = deleteChat;
+      }
+
+      function closeDeleteModal() {
+        document.getElementById("delete-modal").classList.remove("active");
+        chatToDelete = null;
+      }
+
+      async function deleteChat() {
+        if (!chatToDelete) return;
+        try {
+          const res = await fetch(`/api/chats/${chatToDelete}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.ok) {
+            if (currentChat?.id === chatToDelete) closeChat();
+            await loadChats();
+          }
+        } catch (error) {}
+        closeDeleteModal();
+      }
+
+      function deleteCurrentChat() {
+        if (currentChat) confirmDeleteChat(currentChat.id);
+      }
+
+      async function deleteAccount() {
+        if (
+          !confirm(
+            "Вы уверены? Аккаунт и все данные будут удалены безвозвратно!",
+          )
+        )
+          return;
+        try {
+          const res = await fetch("/api/auth/delete", {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.ok) {
+            localStorage.clear();
+            window.location.href = "/";
+          }
+        } catch (error) {}
       }
 
       async function createGroup() {
@@ -956,7 +1405,7 @@
       }
 
       socket.on("private-message", (data) => {
-        if (currentChat?.id === data.chatId) {
+        if (currentChat?.id === data.chatId && currentTab === "chats") {
           loadMessages(currentChat.id);
         } else {
           showNotification(
@@ -970,7 +1419,7 @@
       });
 
       socket.on("group-message", (data) => {
-        if (currentChat?.id === data.groupId) {
+        if (currentChat?.id === data.groupId && currentTab === "chats") {
           loadMessages(currentChat.id);
         } else {
           showNotification(
