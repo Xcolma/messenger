@@ -3,79 +3,451 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Мессенджер — Вход</title>
-    <link rel="stylesheet" href="/css/main.css" />
-    <link rel="manifest" href="/manifest.json" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta
-      name="apple-mobile-web-app-status-bar-style"
-      content="black-translucent"
-    />
-    <meta name="apple-mobile-web-app-title" content="Мессенджер" />
+    <title>Мессенджер - Вход</title>
     <link
-      rel="apple-touch-icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='512' height='512' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='100' fill='%23007AFF'/%3E%3Ctext x='256' y='350' font-size='400' text-anchor='middle'%3E💬%3C/text%3E%3C/svg%3E"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
     />
-    <meta name="theme-color" content="#007AFF" />
+    <style>
+      :root {
+        --bg: #0a0a0a;
+        --surface: #131313;
+        --surface2: #1a1a1a;
+        --primary: #8b5cf6;
+        --primary-glow: rgba(139, 92, 246, 0.3);
+        --secondary: #a78bfa;
+        --text: #ffffff;
+        --text2: #a0a0a0;
+        --border: rgba(139, 92, 246, 0.15);
+        --input-bg: #1e1e1e;
+        --shadow: 0 0 30px rgba(139, 92, 246, 0.1);
+        --gradient: linear-gradient(
+          135deg,
+          #8b5cf6 0%,
+          #6366f1 50%,
+          #a78bfa 100%
+        );
+      }
+
+      .light-theme {
+        --bg: #f0f4ff;
+        --surface: #ffffff;
+        --surface2: #f8faff;
+        --primary: #3b82f6;
+        --primary-glow: rgba(59, 130, 246, 0.2);
+        --secondary: #60a5fa;
+        --text: #1e293b;
+        --text2: #64748b;
+        --border: rgba(59, 130, 246, 0.2);
+        --input-bg: #f1f5f9;
+        --shadow: 0 0 30px rgba(59, 130, 246, 0.1);
+        --gradient: linear-gradient(
+          135deg,
+          #3b82f6 0%,
+          #6366f1 50%,
+          #60a5fa 100%
+        );
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: all 0.5s ease;
+        overflow: hidden;
+      }
+
+      /* Анимированный фон */
+      .bg-animation {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 0;
+        overflow: hidden;
+      }
+
+      .bg-animation .orb {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        opacity: 0.3;
+        animation: float 20s infinite ease-in-out;
+      }
+
+      .bg-animation .orb:nth-child(1) {
+        width: 400px;
+        height: 400px;
+        background: var(--primary);
+        top: -100px;
+        left: -100px;
+        animation-delay: 0s;
+      }
+
+      .bg-animation .orb:nth-child(2) {
+        width: 300px;
+        height: 300px;
+        background: var(--secondary);
+        bottom: -50px;
+        right: -50px;
+        animation-delay: -7s;
+      }
+
+      .bg-animation .orb:nth-child(3) {
+        width: 250px;
+        height: 250px;
+        background: var(--primary);
+        top: 50%;
+        left: 50%;
+        animation-delay: -14s;
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translate(0, 0) scale(1);
+        }
+        25% {
+          transform: translate(100px, -50px) scale(1.1);
+        }
+        50% {
+          transform: translate(50px, 100px) scale(0.9);
+        }
+        75% {
+          transform: translate(-100px, 50px) scale(1.05);
+        }
+      }
+
+      .container {
+        position: relative;
+        z-index: 1;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        padding: 48px;
+        width: 420px;
+        max-width: 90vw;
+        box-shadow: var(--shadow);
+        animation: fadeInUp 0.8s ease;
+        backdrop-filter: blur(20px);
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .logo {
+        text-align: center;
+        margin-bottom: 32px;
+        font-size: 36px;
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+      }
+
+      h1 {
+        text-align: center;
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        background: var(--gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .subtitle {
+        text-align: center;
+        color: var(--text2);
+        margin-bottom: 32px;
+        font-size: 14px;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+        position: relative;
+      }
+
+      .form-group input {
+        width: 100%;
+        padding: 14px 16px;
+        background: var(--input-bg);
+        border: 2px solid var(--border);
+        border-radius: 12px;
+        color: var(--text);
+        font-size: 16px;
+        transition: all 0.3s ease;
+        outline: none;
+      }
+
+      .form-group input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 20px var(--primary-glow);
+      }
+
+      .form-group label {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text2);
+        transition: all 0.3s ease;
+        pointer-events: none;
+        font-size: 16px;
+      }
+
+      .form-group input:focus + label,
+      .form-group input:not(:placeholder-shown) + label {
+        top: 0;
+        left: 12px;
+        font-size: 12px;
+        padding: 0 8px;
+        background: var(--surface);
+        color: var(--primary);
+      }
+
+      .btn {
+        width: 100%;
+        padding: 14px;
+        background: var(--gradient);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px var(--primary-glow);
+      }
+
+      .btn:active {
+        transform: translateY(0);
+      }
+
+      .btn::after {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(
+          45deg,
+          transparent,
+          rgba(255, 255, 255, 0.1),
+          transparent
+        );
+        transform: rotate(45deg);
+        animation: shine 3s infinite;
+      }
+
+      @keyframes shine {
+        0% {
+          transform: translateX(-100%) rotate(45deg);
+        }
+        100% {
+          transform: translateX(100%) rotate(45deg);
+        }
+      }
+
+      .link {
+        text-align: center;
+        margin-top: 20px;
+        color: var(--text2);
+      }
+
+      .link a {
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+      }
+
+      .link a:hover {
+        color: var(--secondary);
+        text-shadow: 0 0 10px var(--primary-glow);
+      }
+
+      .theme-toggle {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 10;
+        background: var(--surface);
+        border: 2px solid var(--border);
+        border-radius: 50%;
+        width: 48px;
+        height: 48px;
+        cursor: pointer;
+        font-size: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        color: var(--text);
+      }
+
+      .theme-toggle:hover {
+        box-shadow: 0 0 20px var(--primary-glow);
+        transform: rotate(180deg);
+      }
+
+      .error-message {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: #ef4444;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: none;
+        animation: shake 0.5s ease;
+      }
+
+      @keyframes shake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        25% {
+          transform: translateX(-10px);
+        }
+        75% {
+          transform: translateX(10px);
+        }
+      }
+
+      /* Адаптивность */
+      @media (max-width: 480px) {
+        .container {
+          padding: 24px;
+          border-radius: 16px;
+          margin: 16px;
+        }
+        h1 {
+          font-size: 24px;
+        }
+        .logo {
+          font-size: 28px;
+        }
+      }
+    </style>
   </head>
   <body>
-    <div class="auth-container">
-      <div class="auth-card">
-        <div class="auth-icon">
-          <svg
-            width="60"
-            height="60"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#007AFF"
-            stroke-width="2"
-          >
-            <path
-              d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
-            ></path>
-          </svg>
-        </div>
-        <h1 class="auth-title">Вход в мессенджер</h1>
-        <p class="auth-subtitle">Войдите, чтобы продолжить общение</p>
-        <form id="loginForm" class="auth-form">
-          <div class="input-group">
-            <label for="username">Логин</label
-            ><input
-              type="text"
-              id="username"
-              placeholder="Введите ваш логин"
-              required
-              autocomplete="username"
-            />
-          </div>
-          <div class="input-group">
-            <label for="password">Пароль</label
-            ><input
-              type="password"
-              id="password"
-              placeholder="Введите пароль"
-              required
-              autocomplete="current-password"
-            />
-          </div>
-          <div
-            id="errorMessage"
-            class="error-message"
-            style="display: none"
-          ></div>
-          <button type="submit" class="btn btn-primary btn-full">Войти</button>
-          <p class="auth-link">
-            Нет аккаунта? <a href="/register">Зарегистрироваться</a>
-          </p>
-        </form>
-      </div>
+    <div class="bg-animation">
+      <div class="orb"></div>
+      <div class="orb"></div>
+      <div class="orb"></div>
     </div>
-    <script src="/js/api.js"></script>
-    <script src="/js/auth.js"></script>
+
+    <button
+      class="theme-toggle"
+      onclick="toggleTheme()"
+      title="Переключить тему"
+    >
+      🌓
+    </button>
+
+    <div class="container">
+      <div class="logo">💬</div>
+      <h1>Мессенджер</h1>
+      <p class="subtitle">Общайтесь с друзьями в реальном времени</p>
+
+      <div class="error-message" id="error-message"></div>
+
+      <form id="login-form">
+        <div class="form-group">
+          <input type="text" id="username" placeholder=" " required />
+          <label for="username">Логин</label>
+        </div>
+        <div class="form-group">
+          <input type="password" id="password" placeholder=" " required />
+          <label for="password">Пароль</label>
+        </div>
+        <button type="submit" class="btn">Войти</button>
+      </form>
+
+      <p class="link">
+        Нет аккаунта? <a href="/register">Зарегистрироваться</a>
+      </p>
+    </div>
+
     <script>
-      if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("/sw.js");
+      // Проверка темы
+      const savedTheme = localStorage.getItem("theme");
+      if (savedTheme === "light") {
+        document.body.classList.add("light-theme");
       }
+
+      function toggleTheme() {
+        document.body.classList.toggle("light-theme");
+        const isLight = document.body.classList.contains("light-theme");
+        localStorage.setItem("theme", isLight ? "light" : "dark");
+      }
+
+      document
+        .getElementById("login-form")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const username = document.getElementById("username").value;
+          const password = document.getElementById("password").value;
+          const errorDiv = document.getElementById("error-message");
+
+          try {
+            const res = await fetch("/api/auth/login", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ username, password }),
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+              localStorage.setItem("token", data.token);
+              localStorage.setItem("user", JSON.stringify(data.user));
+              window.location.href = "/chat";
+            } else {
+              errorDiv.textContent = data.message;
+              errorDiv.style.display = "block";
+              setTimeout(() => (errorDiv.style.display = "none"), 3000);
+            }
+          } catch (err) {
+            errorDiv.textContent = "Ошибка соединения";
+            errorDiv.style.display = "block";
+            setTimeout(() => (errorDiv.style.display = "none"), 3000);
+          }
+        });
     </script>
   </body>
 </html>
