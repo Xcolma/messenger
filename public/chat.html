@@ -177,7 +177,6 @@
         opacity: 0.5;
       }
 
-      /* Стили для уведомлений */
       #notifications-container {
         position: fixed;
         top: 20px;
@@ -304,7 +303,6 @@
       </div>
     </div>
 
-    <!-- Контейнер для уведомлений -->
     <div id="notifications-container"></div>
 
     <script src="/socket.io/socket.io.js"></script>
@@ -320,7 +318,6 @@
       let currentChat = null;
       let chats = [];
 
-      // In-app уведомления
       function showNotification(
         title,
         message,
@@ -357,7 +354,6 @@
         }, 5000);
       }
 
-      // Web Push подписка
       async function subscribeToPush() {
         if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
           console.log("Push уведомления не поддерживаются");
@@ -369,7 +365,7 @@
           const subscription = await registration.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: urlBase64ToUint8Array(
-              "BEl62iIwu0C5PD0YqGj7c2qJz4YH5k0XkSMXgL7oRv6ZlL0k0c8dLwM3fYj9zQ5BvN3fR8tG7vB2cD4eF6gH8",
+              "BE_g7Xn1J6PJGZPhPJQSFta3sOahYk_o0fCn1zjhDPflZ5VCv8Rgy0Fvoo6qj1SfROnus50AEQGlaD8faeAbDNY",
             ),
           });
 
@@ -629,7 +625,6 @@
         console.log("Онлайн:", users.length);
       });
 
-      // Запуск
       loadChats();
       subscribeToPush();
     </script>
