@@ -17,7 +17,6 @@
         --surface: #131313;
         --surface2: #1a1a1a;
         --primary: #8b5cf6;
-        --primary-glow: rgba(139, 92, 246, 0.3);
         --secondary: #a78bfa;
         --text: #ffffff;
         --text2: #a0a0a0;
@@ -34,7 +33,6 @@
         --surface: #fff;
         --surface2: #f8faff;
         --primary: #3b82f6;
-        --primary-glow: rgba(59, 130, 246, 0.2);
         --secondary: #60a5fa;
         --text: #1e293b;
         --text2: #64748b;
@@ -103,10 +101,12 @@
         display: flex;
         flex: 1;
         overflow: hidden;
+        width: 100%;
       }
       .chats-panel {
         width: 100%;
         max-width: 380px;
+        min-width: 0;
         background: var(--surface);
         border-right: 1px solid var(--border);
         display: flex;
@@ -116,6 +116,7 @@
       .chats-list {
         flex: 1;
         overflow-y: auto;
+        overflow-x: hidden;
         padding: 0 8px;
       }
       .chats-list::-webkit-scrollbar {
@@ -166,10 +167,16 @@
       .chat-name {
         font-weight: 600;
         font-size: 14px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       .chat-last {
         font-size: 12px;
         color: var(--text2);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
         margin-top: 1px;
       }
       .unread-badge {
@@ -179,6 +186,7 @@
         font-weight: 700;
         padding: 2px 7px;
         border-radius: 10px;
+        flex-shrink: 0;
       }
       .online-dot {
         width: 8px;
@@ -194,6 +202,7 @@
         flex-direction: column;
         background: var(--bg);
         overflow: hidden;
+        min-width: 0;
       }
       .empty-state {
         flex: 1;
@@ -207,6 +216,7 @@
         display: none;
         flex-direction: column;
         height: 100%;
+        overflow: hidden;
       }
       .chat-view.active {
         display: flex;
@@ -220,22 +230,26 @@
         gap: 8px;
         background: var(--surface);
         min-height: 48px;
+        flex-shrink: 0;
       }
       .chat-header h2 {
         font-size: 15px;
         font-weight: 600;
         flex: 1;
+        min-width: 0;
       }
       .typing-indicator {
         font-size: 11px;
         color: var(--primary);
         font-style: italic;
+        flex-shrink: 0;
       }
 
       .messages {
         flex: 1;
         padding: 10px;
         overflow-y: auto;
+        overflow-x: hidden;
         display: flex;
         flex-direction: column;
         gap: 3px;
@@ -254,6 +268,8 @@
         animation: msgIn 0.2s ease;
         position: relative;
         font-size: 14px;
+        word-wrap: break-word;
+        overflow: hidden;
       }
       @keyframes msgIn {
         from {
@@ -281,6 +297,7 @@
       }
       .message-inner {
         padding: 7px 10px;
+        overflow: hidden;
       }
       .message .msg-reply {
         font-size: 11px;
@@ -297,8 +314,8 @@
         opacity: 0.8;
       }
       .message .msg-media-wrapper {
-        position: relative;
         margin: -7px -10px 0 -10px;
+        overflow: hidden;
       }
       .message .msg-media {
         width: 100%;
@@ -310,13 +327,12 @@
       .message .msg-media-caption {
         padding: 4px 10px 6px 10px;
         font-size: 14px;
-      }
-      .message .msg-audio {
-        padding: 4px 0;
+        word-wrap: break-word;
       }
       .message .msg-audio audio {
         max-width: 180px;
         height: 32px;
+        outline: none;
       }
       .message .msg-file {
         display: flex;
@@ -327,6 +343,7 @@
         border-radius: 6px;
         font-size: 11px;
         margin: 2px 0;
+        overflow: hidden;
       }
       .message .msg-time-status {
         display: flex;
@@ -352,6 +369,7 @@
         gap: 2px;
         z-index: 10;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        white-space: nowrap;
       }
       .message.selected .msg-actions-overlay {
         display: flex;
@@ -364,7 +382,6 @@
         font-size: 14px;
         padding: 6px 8px;
         border-radius: 6px;
-        white-space: nowrap;
       }
       .msg-action-btn:hover {
         background: var(--primary);
@@ -383,6 +400,7 @@
         font-size: 11px;
         align-items: center;
         gap: 6px;
+        flex-shrink: 0;
       }
       .reply-bar.active,
       .edit-bar.active {
@@ -401,16 +419,18 @@
         border-top: 1px solid var(--border);
         background: var(--surface);
         position: relative;
+        flex-shrink: 0;
       }
       .media-preview {
         display: none;
         padding: 0 10px 6px 10px;
         position: relative;
+        overflow-x: auto;
+        gap: 8px;
       }
       .media-preview.active {
         display: flex;
         align-items: flex-start;
-        gap: 8px;
       }
       .media-preview img,
       .media-preview video {
@@ -418,11 +438,16 @@
         height: 60px;
         border-radius: 8px;
         object-fit: cover;
+        flex-shrink: 0;
       }
-      .media-preview .remove-media {
+      .media-preview-item {
+        position: relative;
+        flex-shrink: 0;
+      }
+      .media-preview-item .remove-media {
         position: absolute;
-        top: -4px;
-        left: 50px;
+        top: -6px;
+        right: -6px;
         background: var(--danger);
         color: white;
         border: none;
@@ -431,6 +456,9 @@
         height: 20px;
         cursor: pointer;
         font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
       .input-row {
         display: flex;
@@ -460,6 +488,7 @@
         color: var(--text);
         font-size: 13px;
         outline: none;
+        min-width: 0;
       }
       .msg-input:focus {
         border-color: var(--primary);
@@ -477,6 +506,7 @@
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
+        transition: all 0.2s;
       }
       .voice-btn.recording {
         background: var(--danger);
@@ -515,14 +545,35 @@
         gap: 10px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
         margin-bottom: 8px;
+        animation: slideUp 0.2s ease;
       }
       .voice-slider-container.active {
         display: flex;
+      }
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateX(-50%) translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(-50%) translateY(0);
+        }
       }
       .voice-slider-text {
         font-size: 12px;
         color: var(--text2);
         white-space: nowrap;
+        animation: pulse-text 1.5s infinite;
+      }
+      @keyframes pulse-text {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
       }
       .voice-slider-lock {
         background: var(--input-bg);
@@ -531,10 +582,12 @@
         padding: 8px 14px;
         cursor: pointer;
         font-size: 18px;
+        transition: all 0.2s;
       }
       .voice-slider-lock.locked {
         background: var(--primary);
         color: white;
+        transform: scale(1.1);
       }
       .voice-slider-cancel {
         color: var(--danger);
@@ -579,6 +632,7 @@
         flex: 1;
         padding: 16px;
         overflow-y: auto;
+        overflow-x: hidden;
         background: var(--surface);
       }
       .settings-panel.active {
@@ -1302,27 +1356,25 @@
                   if (rp)
                     ct += `<div class="msg-reply" onclick="scrollToMsg(${rp.id})">↩ ${(rp.content || "[Медиа]").substring(0, 40)}</div>`;
                 }
-                const hasMedia = m.type === "image" || m.type === "video";
                 let mediaHtml = "";
-                if (m.type === "image")
-                  mediaHtml = `<img src="${m.content}" class="msg-media" onclick="window.open('${m.content}')">`;
-                else if (m.type === "video")
-                  mediaHtml = `<video src="${m.content}" class="msg-media" controls playsinline onclick="event.stopPropagation()"></video>`;
-                else if (m.type === "audio")
+                if (m.type === "image" || m.type === "video") {
+                  mediaHtml = `<div class="msg-media-wrapper">`;
+                  if (m.type === "image")
+                    mediaHtml += `<img src="${m.content}" class="msg-media" onclick="window.open('${m.content}')">`;
+                  else
+                    mediaHtml += `<video src="${m.content}" class="msg-media" controls playsinline onclick="event.stopPropagation()"></video>`;
+                  mediaHtml += `</div>`;
+                  if (m.caption)
+                    mediaHtml += `<div class="msg-media-caption">${m.caption}</div>`;
+                } else if (m.type === "audio") {
                   mediaHtml = `<div class="msg-audio"><audio controls src="${m.content}"></audio></div>`;
-                else if (m.type === "file")
+                } else if (m.type === "file") {
                   mediaHtml = `<div class="msg-file">📎 <a href="${m.content}" target="_blank">${m.file_name || "файл"}</a></div>`;
-                if (hasMedia && mediaHtml) {
-                  ct += `<div class="msg-media-wrapper">${mediaHtml}</div>`;
-                  if (
-                    m.content &&
-                    m.content.length > 0 &&
-                    !m.content.startsWith("data:")
-                  )
-                    ct += `<div class="msg-media-caption">${m.content}</div>`;
-                } else if (!hasMedia) ct += `<span>${m.content}</span>`;
+                } else {
+                  ct += `<span>${m.content}</span>`;
+                }
                 if (m.edited) ct += ' <span class="edited-tag">изм.</span>';
-                return `<div class="message ${im ? "sent" : "received"}" id="msg-${m.id}" onclick="selectMessage(event,${m.id},${im},'${(m.content || "").replace(/'/g, "\\'")}')"><div class="message-inner">${!im ? `<div class="msg-sender">${m.username}</div>` : ""}${ct}<div class="msg-time-status"><span>${new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>${ic ? `<span>${ic}</span>` : ""}</div></div><div class="msg-actions-overlay"><button class="msg-action-btn" onclick="event.stopPropagation();startReply(${m.id},'${(m.content || "").replace(/'/g, "\\'").substring(0, 30)}')">↩</button>${im ? `<button class="msg-action-btn" onclick="event.stopPropagation();startEdit(${m.id},'${(m.content || "").replace(/'/g, "\\'")}')">✏️</button>` : ""}<button class="msg-action-btn danger" onclick="event.stopPropagation();confirmDeleteMsg(${m.id})">🗑️</button></div></div>`;
+                return `<div class="message ${im ? "sent" : "received"}" id="msg-${m.id}" onclick="selectMessage(event,${m.id})"><div class="message-inner">${!im ? `<div class="msg-sender">${m.username}</div>` : ""}${mediaHtml}${ct}<div class="msg-time-status"><span>${new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>${ic ? `<span>${ic}</span>` : ""}</div></div><div class="msg-actions-overlay"><button class="msg-action-btn" onclick="event.stopPropagation();startReply(${m.id},'${(m.content || "").replace(/'/g, "\\'").substring(0, 30)}')">↩</button>${im ? `<button class="msg-action-btn" onclick="event.stopPropagation();startEdit(${m.id},'${(m.content || "").replace(/'/g, "\\'")}')">✏️</button>` : ""}<button class="msg-action-btn danger" onclick="event.stopPropagation();confirmDeleteMsg(${m.id})">🗑️</button></div></div>`;
               })
               .join("");
             document.getElementById("messages").scrollTop =
@@ -1387,6 +1439,8 @@
         c.classList.add("active");
         pendingMedia.forEach((m, i) => {
           const isVideo = m.type.startsWith("video/");
+          const wrap = document.createElement("div");
+          wrap.className = "media-preview-item";
           const el = isVideo
             ? document.createElement("video")
             : document.createElement("img");
@@ -1395,7 +1449,7 @@
             el.muted = true;
             el.playsInline = true;
           }
-          c.appendChild(el);
+          wrap.appendChild(el);
           const rm = document.createElement("button");
           rm.className = "remove-media";
           rm.textContent = "✕";
@@ -1404,7 +1458,8 @@
             updateMediaPreview();
             updateSendButton();
           };
-          c.appendChild(rm);
+          wrap.appendChild(rm);
+          c.appendChild(wrap);
         });
       }
       function updateSendButton() {
@@ -1450,21 +1505,32 @@
             if (m.type.startsWith("image/")) t = "image";
             else if (m.type.startsWith("video/")) t = "video";
             else if (m.type.startsWith("audio/")) t = "audio";
-            const content = t === "image" || t === "video" ? caption : m.data; // медиа + подпись
             const md = {
               chatId: currentChat.id,
               fromUser: currentUser,
-              message: content,
+              message: t === "image" || t === "video" ? caption : caption || "",
               type: t,
-              fileName: m.fileName || m.data,
+              fileName: m.fileName,
+              mediaData: m.data,
+              caption: t === "image" || t === "video" ? caption : "",
             };
             if (currentChat.type === "private") {
               const tu = currentChat.members.find(
                 (x) => x.id !== currentUser.id,
               );
-              socket.emit("private-message", { ...md, toUserId: tu.id });
+              socket.emit("private-message", {
+                ...md,
+                toUserId: tu.id,
+                content: m.data,
+                message: md.message,
+              });
             } else
-              socket.emit("group-message", { ...md, groupId: currentChat.id });
+              socket.emit("group-message", {
+                ...md,
+                groupId: currentChat.id,
+                content: m.data,
+                message: md.message,
+              });
           });
           pendingMedia = [];
           updateMediaPreview();
@@ -1512,9 +1578,10 @@
                 const md = {
                   chatId: currentChat.id,
                   fromUser: currentUser,
-                  message: reader.result,
+                  message: "🎤 Голосовое сообщение",
                   type: "audio",
-                  fileName: "🎤 Голосовое",
+                  fileName: "voice.webm",
+                  content: reader.result,
                 };
                 if (currentChat.type === "private") {
                   const tu = currentChat.members.find(
@@ -1546,17 +1613,15 @@
       }
       function toggleVoiceLock() {
         voiceLocked = !voiceLocked;
-        document
-          .getElementById("voice-lock-btn")
-          .classList.toggle("locked", voiceLocked);
-        document.getElementById("voice-lock-btn").textContent = voiceLocked
-          ? "🔓"
-          : "🔒";
+        const btn = document.getElementById("voice-lock-btn");
+        btn.classList.toggle("locked", voiceLocked);
+        btn.textContent = voiceLocked ? "🔓" : "🔒";
       }
       function lockVoice() {
         voiceLocked = true;
-        document.getElementById("voice-lock-btn").classList.add("locked");
-        document.getElementById("voice-lock-btn").textContent = "🔓";
+        const btn = document.getElementById("voice-lock-btn");
+        btn.classList.add("locked");
+        btn.textContent = "🔓";
         showNotification("🔒", "Запись закреплена");
       }
       function stopVoice(e) {
@@ -1578,7 +1643,6 @@
         voiceLocked = false;
         document.getElementById("voice-btn").classList.remove("recording");
         document.getElementById("voice-slider").classList.remove("active");
-        showNotification("❌", "Запись отменена");
       }
       document
         .getElementById("voice-btn")
@@ -1825,18 +1889,14 @@
         } else
           showNotification(
             data.from.username || data.from.display_name,
-            data.message?.substring(0, 50) || "[Медиа]",
+            data.message || "[Медиа]",
           );
         loadChats();
       });
       socket.on("group-message", (data) => {
         if (currentChat?.id === data.groupId && currentTab === "chats")
           loadMessages(currentChat.id);
-        else
-          showNotification(
-            data.from.username,
-            data.message?.substring(0, 50) || "[Медиа]",
-          );
+        else showNotification(data.from.username, data.message || "[Медиа]");
         loadChats();
       });
       socket.on("edit-message", (data) => {
