@@ -83,7 +83,7 @@
       }
       .icon-btn {
         background: var(--input-bg);
-        border: 1px solid var(--border);
+        border: none;
         color: var(--text);
         width: 34px;
         height: 34px;
@@ -104,7 +104,6 @@
         flex: 1;
         overflow: hidden;
       }
-
       .chats-panel {
         width: 100%;
         max-width: 380px;
@@ -167,16 +166,10 @@
       .chat-name {
         font-weight: 600;
         font-size: 14px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
       }
       .chat-last {
         font-size: 12px;
         color: var(--text2);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
         margin-top: 1px;
       }
       .unread-badge {
@@ -257,10 +250,8 @@
 
       .message {
         max-width: 78%;
-        padding: 7px 10px;
         border-radius: 12px;
         animation: msgIn 0.2s ease;
-        word-wrap: break-word;
         position: relative;
         font-size: 14px;
       }
@@ -288,6 +279,9 @@
       .light-theme .message.received {
         color: #1e293b;
       }
+      .message-inner {
+        padding: 7px 10px;
+      }
       .message .msg-reply {
         font-size: 11px;
         opacity: 0.7;
@@ -302,32 +296,43 @@
         margin-bottom: 1px;
         opacity: 0.8;
       }
+      .message .msg-media-wrapper {
+        position: relative;
+        margin: -7px -10px 0 -10px;
+      }
       .message .msg-media {
-        max-width: 220px;
-        max-height: 220px;
-        border-radius: 6px;
-        margin-top: 2px;
+        width: 100%;
+        max-width: 300px;
+        border-radius: 12px 12px 3px 3px;
+        display: block;
         cursor: pointer;
       }
+      .message .msg-media-caption {
+        padding: 4px 10px 6px 10px;
+        font-size: 14px;
+      }
+      .message .msg-audio {
+        padding: 4px 0;
+      }
       .message .msg-audio audio {
-        max-width: 160px;
+        max-width: 180px;
         height: 32px;
       }
       .message .msg-file {
         display: flex;
         align-items: center;
         gap: 5px;
-        margin-top: 2px;
         background: rgba(0, 0, 0, 0.2);
         padding: 5px 8px;
         border-radius: 6px;
         font-size: 11px;
+        margin: 2px 0;
       }
       .message .msg-time-status {
         display: flex;
         justify-content: flex-end;
         gap: 3px;
-        margin-top: 1px;
+        margin-top: 2px;
         font-size: 9px;
         opacity: 0.7;
       }
@@ -335,7 +340,6 @@
         font-size: 9px;
         opacity: 0.5;
       }
-
       .message .msg-actions-overlay {
         display: none;
         position: absolute;
@@ -384,11 +388,49 @@
       .edit-bar.active {
         display: flex;
       }
+      .reply-bar span,
+      .edit-bar span {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
 
       .input-area {
         padding: 8px 10px;
         border-top: 1px solid var(--border);
         background: var(--surface);
+        position: relative;
+      }
+      .media-preview {
+        display: none;
+        padding: 0 10px 6px 10px;
+        position: relative;
+      }
+      .media-preview.active {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      .media-preview img,
+      .media-preview video {
+        width: 60px;
+        height: 60px;
+        border-radius: 8px;
+        object-fit: cover;
+      }
+      .media-preview .remove-media {
+        position: absolute;
+        top: -4px;
+        left: 50px;
+        background: var(--danger);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        font-size: 12px;
       }
       .input-row {
         display: flex;
@@ -397,7 +439,6 @@
       }
       .attach-btn {
         background: var(--input-bg);
-        border: 1px solid var(--border);
         color: var(--text);
         width: 34px;
         height: 34px;
@@ -408,6 +449,7 @@
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
+        border: none;
       }
       .msg-input {
         flex: 1;
@@ -422,7 +464,6 @@
       .msg-input:focus {
         border-color: var(--primary);
       }
-
       .voice-btn {
         width: 38px;
         height: 38px;
@@ -439,16 +480,6 @@
       }
       .voice-btn.recording {
         background: var(--danger);
-        animation: pulse 1s infinite;
-      }
-      @keyframes pulse {
-        0%,
-        100% {
-          box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
-        }
-        50% {
-          box-shadow: 0 0 0 10px transparent;
-        }
       }
       .send-btn {
         background: var(--gradient);
@@ -460,25 +491,72 @@
         font-weight: 600;
         font-size: 13px;
         flex-shrink: 0;
+        display: none;
+      }
+      .send-btn.visible {
+        display: block;
+      }
+      .voice-btn.hidden {
+        display: none;
+      }
+
+      .voice-slider-container {
+        display: none;
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 10px 16px;
+        z-index: 20;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        margin-bottom: 8px;
+      }
+      .voice-slider-container.active {
+        display: flex;
+      }
+      .voice-slider-text {
+        font-size: 12px;
+        color: var(--text2);
+        white-space: nowrap;
+      }
+      .voice-slider-lock {
+        background: var(--input-bg);
+        border: none;
+        border-radius: 8px;
+        padding: 8px 14px;
+        cursor: pointer;
+        font-size: 18px;
+      }
+      .voice-slider-lock.locked {
+        background: var(--primary);
+        color: white;
+      }
+      .voice-slider-cancel {
+        color: var(--danger);
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 13px;
       }
 
       #media-input {
         display: none;
       }
-      #video-input {
-        display: none;
-      }
 
       .bottom-nav {
-        display: flex;
+        display: none;
         background: var(--surface);
         border-top: 1px solid var(--border);
         padding: 5px 12px;
         gap: 6px;
         flex-shrink: 0;
       }
-      .bottom-nav.hide {
-        display: none;
+      .bottom-nav.visible {
+        display: flex;
       }
       .nav-item {
         flex: 1;
@@ -620,7 +698,6 @@
         transform: translateX(20px);
       }
 
-      /* ПОИСК */
       .search-modal {
         display: none;
         position: fixed;
@@ -768,6 +845,9 @@
         .back-btn.show {
           display: flex;
         }
+        .bottom-nav.visible {
+          display: flex;
+        }
       }
       @media (min-width: 769px) {
         .right-panel {
@@ -775,6 +855,9 @@
         }
         .back-btn {
           display: none;
+        }
+        .bottom-nav.visible {
+          display: flex;
         }
       }
     </style>
@@ -806,14 +889,13 @@
         </div>
       </div>
     </div>
-
     <div class="search-modal" id="search-modal">
       <div class="search-modal-header">
-        <button class="icon-btn" onclick="closeSearch()">←</button>
-        <input
+        <button class="icon-btn" onclick="closeSearch()">←</button
+        ><input
           type="text"
           id="search-modal-input"
-          placeholder="Поиск пользователей..."
+          placeholder="Поиск..."
           onkeyup="searchUsersModal()"
         />
       </div>
@@ -833,7 +915,6 @@
       <div class="chats-panel" id="chats-panel">
         <div id="chats-list" class="chats-list"></div>
       </div>
-
       <div class="right-panel" id="right-panel">
         <div class="empty-state" id="empty-state">Выберите чат</div>
         <div class="chat-view" id="chat-view">
@@ -843,15 +924,14 @@
               id="typing-indicator"
               class="typing-indicator"
               style="display: none"
-            ></span>
-            <button
+            ></span
+            ><button
               class="icon-btn"
               onclick="deleteCurrentChat()"
               style="color: var(--danger)"
             >
-              🗑️
-            </button>
-            <button class="icon-btn" onclick="closeChat()">✕</button>
+              🗑️</button
+            ><button class="icon-btn" onclick="closeChat()">✕</button>
           </div>
           <div class="reply-bar" id="reply-bar">
             <span>↩</span><span id="reply-text"></span
@@ -875,6 +955,18 @@
           </div>
           <div class="messages" id="messages"></div>
           <div class="input-area">
+            <div class="voice-slider-container" id="voice-slider">
+              <span class="voice-slider-cancel" onclick="cancelVoice()"
+                >Отмена</span
+              ><span class="voice-slider-text">Свайп вверх для закрепления</span
+              ><span
+                class="voice-slider-lock"
+                id="voice-lock-btn"
+                onclick="toggleVoiceLock()"
+                >🔒</span
+              >
+            </div>
+            <div class="media-preview" id="media-preview"></div>
             <div class="input-row">
               <button
                 class="attach-btn"
@@ -888,34 +980,29 @@
                 id="message-input"
                 placeholder="Сообщение..."
                 onkeypress="if (event.key === 'Enter') sendMessage();"
-                oninput="handleTyping()"
+                oninput="handleInput()"
               />
               <input
                 type="file"
                 id="media-input"
                 accept="image/*,video/*,audio/*,.pdf,.doc,.txt"
-                onchange="sendMedia(event)"
+                onchange="handleMediaSelect(event)"
                 multiple
-              />
-              <input
-                type="file"
-                id="video-input"
-                accept="video/*"
-                capture="user"
-                onchange="sendVideoCircle(event)"
               />
               <button
                 class="voice-btn"
                 id="voice-btn"
-                onmousedown="startVoice()"
-                onmouseup="stopVoice()"
+                onmousedown="startVoice(event)"
+                onmouseup="stopVoice(event)"
                 ontouchstart="startVoice(event)"
-                ontouchend="stopVoice()"
+                ontouchend="stopVoice(event)"
                 ontouchmove="moveVoice(event)"
               >
                 🎤
               </button>
-              <button class="send-btn" onclick="sendMessage()">➤</button>
+              <button class="send-btn" id="send-btn" onclick="sendMessage()">
+                ➤
+              </button>
             </div>
           </div>
         </div>
@@ -978,7 +1065,7 @@
       </div>
     </div>
 
-    <div class="bottom-nav" id="bottom-nav">
+    <div class="bottom-nav visible" id="bottom-nav">
       <div
         class="nav-item active"
         data-tab="chats"
@@ -1009,13 +1096,14 @@
         replyTo = null,
         editMsgId = null;
       let typingTimeout = null,
-        typingUsers = {};
+        typingUsers = {},
+        selectedMsg = null;
       let mediaRecorder = null,
         audioChunks = [],
         voiceLocked = false,
-        voiceStartY = 0,
-        recording = false;
-      let selectedMsg = null;
+        recording = false,
+        voiceStartY = 0;
+      let pendingMedia = [];
 
       const savedTheme = localStorage.getItem("theme");
       if (savedTheme === "light") {
@@ -1030,19 +1118,26 @@
         );
       }
 
+      function updateUIVisibility() {
+        const bn = document.getElementById("bottom-nav");
+        bn.classList.toggle(
+          "visible",
+          (currentTab === "chats" && !currentChat) || currentTab === "settings",
+        );
+      }
+
       function switchTab(tab) {
         currentTab = tab;
         document
           .querySelectorAll(".nav-item")
           .forEach((e) => e.classList.remove("active"));
-        document.querySelector(`[data-tab="${tab}"]`).classList.add("active");
-        const rp = document.getElementById("right-panel");
-        const cp = document.getElementById("chats-panel");
-        const es = document.getElementById("empty-state");
-        const cv = document.getElementById("chat-view");
-        const sp = document.getElementById("settings-panel");
-        const bn = document.getElementById("bottom-nav");
-
+        const nav = document.querySelector(`[data-tab="${tab}"]`);
+        if (nav) nav.classList.add("active");
+        const rp = document.getElementById("right-panel"),
+          cp = document.getElementById("chats-panel");
+        const es = document.getElementById("empty-state"),
+          cv = document.getElementById("chat-view"),
+          sp = document.getElementById("settings-panel");
         sp.classList.remove("active");
         if (tab === "chats") {
           if (currentChat) {
@@ -1052,27 +1147,20 @@
             es.style.display = "flex";
             cv.classList.remove("active");
           }
-          if (window.innerWidth < 769) {
-            rp.classList.add("show");
-            cp.classList.add("hide");
-            bn.classList.add("hide");
-          } else {
-            rp.style.display = "flex";
-          }
           document.getElementById("header-title").textContent = currentChat
-            ? "💬 Чат"
+            ? getChatName(currentChat)
             : "💬 Мессенджер";
         } else {
           cv.classList.remove("active");
           es.style.display = "none";
           sp.classList.add("active");
-          if (window.innerWidth < 769) {
-            rp.classList.add("show");
-            cp.classList.add("hide");
-            bn.classList.add("hide");
-          }
           document.getElementById("header-title").textContent = "⚙️ Настройки";
           loadSettings();
+        }
+        updateUIVisibility();
+        if (window.innerWidth < 769) {
+          rp.classList.add("show");
+          cp.classList.add("hide");
         }
       }
 
@@ -1084,14 +1172,13 @@
         document.getElementById("displayname-input").value =
           currentUser.displayName || "";
       }
-
-      function showNotification(title, msg) {
+      function showNotification(t, m) {
         const c = document.getElementById("notifications-container");
-        const t = document.createElement("div");
-        t.className = "notification-toast";
-        t.innerHTML = `<strong>${title}</strong> ${msg}`;
-        c.appendChild(t);
-        setTimeout(() => t.remove(), 4000);
+        const d = document.createElement("div");
+        d.className = "notification-toast";
+        d.innerHTML = `<strong>${t}</strong> ${m}`;
+        c.appendChild(d);
+        setTimeout(() => d.remove(), 4000);
       }
 
       async function subscribeToPush() {
@@ -1127,7 +1214,6 @@
         id: currentUser.id,
         username: currentUser.username,
       });
-
       async function loadChats() {
         try {
           const r = await fetch("/api/chats", {
@@ -1140,29 +1226,24 @@
           }
         } catch (e) {}
       }
-      function getChatName(chat) {
-        if (chat.name) return chat.name;
-        const o = chat.members?.find((m) => m.id !== currentUser.id);
+      function getChatName(c) {
+        if (c.name) return c.name;
+        const o = c.members?.find((m) => m.id !== currentUser.id);
         return o?.display_name || o?.username || "Чат";
       }
 
       function renderChats() {
         document.getElementById("chats-list").innerHTML = chats
-          .map((chat) => {
-            const other = chat.members?.find((m) => m.id !== currentUser.id);
-            const online = other && onlineUserIds.has(other.id);
-            return `<div class="chat-item ${currentChat?.id === chat.id ? "active" : ""}" onclick="openChatById(${chat.id})">
-      <div class="chat-avatar">${getChatName(chat).charAt(0)}</div>
-      <div class="chat-info"><div class="chat-name">${getChatName(chat)}</div><div class="chat-last">${chat.last_message || "Нет сообщений"}</div></div>
-      ${chat.unread_count > 0 ? `<span class="unread-badge">${chat.unread_count}</span>` : ""}
-      ${online ? '<span class="online-dot"></span>' : ""}
-    </div>`;
+          .map((c) => {
+            const o = c.members?.find((m) => m.id !== currentUser.id);
+            const on = o && onlineUserIds.has(o.id);
+            return `<div class="chat-item ${currentChat?.id === c.id ? "active" : ""}" onclick="openChatById(${c.id})"><div class="chat-avatar">${getChatName(c).charAt(0)}</div><div class="chat-info"><div class="chat-name">${getChatName(c)}</div><div class="chat-last">${c.last_message || "Нет сообщений"}</div></div>${c.unread_count > 0 ? `<span class="unread-badge">${c.unread_count}</span>` : ""}${on ? '<span class="online-dot"></span>' : ""}</div>`;
           })
           .join("");
       }
 
-      function openChatById(chatId) {
-        currentChat = chats.find((c) => c.id === chatId);
+      function openChatById(id) {
+        currentChat = chats.find((c) => c.id === id);
         if (!currentChat) return;
         document.getElementById("empty-state").style.display = "none";
         document.getElementById("chat-view").classList.add("active");
@@ -1173,75 +1254,75 @@
           getChatName(currentChat);
         cancelReply();
         cancelEdit();
-        loadMessages(chatId);
+        clearPendingMedia();
+        loadMessages(id);
         renderChats();
         switchTab("chats");
-        socket.emit("mark-read", { chatId, userId: currentUser.id });
+        updateUIVisibility();
+        socket.emit("mark-read", { chatId: id, userId: currentUser.id });
         if (window.innerWidth < 769) {
           document.getElementById("chats-panel").classList.add("hide");
           document.getElementById("right-panel").classList.add("show");
           document.getElementById("back-btn").classList.add("show");
-          document.getElementById("bottom-nav").classList.add("hide");
         }
       }
-
       function goBack() {
         currentChat = null;
         document.getElementById("empty-state").style.display = "flex";
         document.getElementById("chat-view").classList.remove("active");
         document.getElementById("settings-panel").classList.remove("active");
         document.getElementById("header-title").textContent = "💬 Мессенджер";
+        switchTab("chats");
+        updateUIVisibility();
         renderChats();
         if (window.innerWidth < 769) {
           document.getElementById("chats-panel").classList.remove("hide");
           document.getElementById("right-panel").classList.remove("show");
           document.getElementById("back-btn").classList.remove("show");
-          document.getElementById("bottom-nav").classList.remove("hide");
         }
       }
-
       function closeChat() {
         goBack();
       }
 
-      async function loadMessages(chatId) {
+      async function loadMessages(id) {
         try {
-          const r = await fetch(`/api/chats/${chatId}/messages`, {
+          const r = await fetch(`/api/chats/${id}/messages`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           const d = await r.json();
           if (d.success) {
             document.getElementById("messages").innerHTML = d.messages
-              .map((msg) => {
-                const isMine = msg.sender_id === currentUser.id;
-                let icon = isMine ? (msg.status === "read" ? "✓✓" : "✓") : "";
-                let content = "";
-                if (msg.reply_to) {
-                  const rp = d.messages.find((m) => m.id === msg.reply_to);
+              .map((m) => {
+                const im = m.sender_id === currentUser.id;
+                let ic = im ? (m.status === "read" ? "✓✓" : "✓") : "";
+                let ct = "";
+                if (m.reply_to) {
+                  const rp = d.messages.find((x) => x.id === m.reply_to);
                   if (rp)
-                    content += `<div class="msg-reply" onclick="scrollToMsg(${rp.id})">↩ ${(rp.content || "[Медиа]").substring(0, 40)}</div>`;
+                    ct += `<div class="msg-reply" onclick="scrollToMsg(${rp.id})">↩ ${(rp.content || "[Медиа]").substring(0, 40)}</div>`;
                 }
-                if (msg.type === "video_circle")
-                  content += `<video class="msg-media" src="${msg.content}" controls playsinline style="border-radius:50%;width:200px;height:200px;object-fit:cover"></video>`;
-                else if (msg.type === "image" || msg.type === "video")
-                  content += `<img src="${msg.content}" class="msg-media" onclick="window.open('${msg.content}')">`;
-                else if (msg.type === "audio")
-                  content += `<div class="msg-audio"><audio controls src="${msg.content}"></audio></div>`;
-                else if (msg.type === "file")
-                  content += `<div class="msg-file">📎 <a href="${msg.content}" target="_blank">${msg.file_name || "файл"}</a></div>`;
-                else content += `<span>${msg.content}</span>`;
-                if (msg.edited)
-                  content += ' <span class="edited-tag">изм.</span>';
-                return `<div class="message ${isMine ? "sent" : "received"}" id="msg-${msg.id}" onclick="selectMessage(event, ${msg.id}, ${isMine}, '${(msg.content || "").replace(/'/g, "\\'")}')">
-          ${!isMine ? `<div class="msg-sender">${msg.username}</div>` : ""}
-          ${content}
-          <div class="msg-time-status"><span>${new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>${icon ? `<span>${icon}</span>` : ""}</div>
-          <div class="msg-actions-overlay">
-            <button class="msg-action-btn" onclick="event.stopPropagation();startReply(${msg.id},'${(msg.content || "").replace(/'/g, "\\'").substring(0, 30)}')">↩</button>
-            ${isMine ? `<button class="msg-action-btn" onclick="event.stopPropagation();startEdit(${msg.id},'${(msg.content || "").replace(/'/g, "\\'")}')">✏️</button>` : ""}
-            <button class="msg-action-btn danger" onclick="event.stopPropagation();confirmDeleteMsg(${msg.id})">🗑️</button>
-          </div>
-        </div>`;
+                const hasMedia = m.type === "image" || m.type === "video";
+                let mediaHtml = "";
+                if (m.type === "image")
+                  mediaHtml = `<img src="${m.content}" class="msg-media" onclick="window.open('${m.content}')">`;
+                else if (m.type === "video")
+                  mediaHtml = `<video src="${m.content}" class="msg-media" controls playsinline onclick="event.stopPropagation()"></video>`;
+                else if (m.type === "audio")
+                  mediaHtml = `<div class="msg-audio"><audio controls src="${m.content}"></audio></div>`;
+                else if (m.type === "file")
+                  mediaHtml = `<div class="msg-file">📎 <a href="${m.content}" target="_blank">${m.file_name || "файл"}</a></div>`;
+                if (hasMedia && mediaHtml) {
+                  ct += `<div class="msg-media-wrapper">${mediaHtml}</div>`;
+                  if (
+                    m.content &&
+                    m.content.length > 0 &&
+                    !m.content.startsWith("data:")
+                  )
+                    ct += `<div class="msg-media-caption">${m.content}</div>`;
+                } else if (!hasMedia) ct += `<span>${m.content}</span>`;
+                if (m.edited) ct += ' <span class="edited-tag">изм.</span>';
+                return `<div class="message ${im ? "sent" : "received"}" id="msg-${m.id}" onclick="selectMessage(event,${m.id},${im},'${(m.content || "").replace(/'/g, "\\'")}')"><div class="message-inner">${!im ? `<div class="msg-sender">${m.username}</div>` : ""}${ct}<div class="msg-time-status"><span>${new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>${ic ? `<span>${ic}</span>` : ""}</div></div><div class="msg-actions-overlay"><button class="msg-action-btn" onclick="event.stopPropagation();startReply(${m.id},'${(m.content || "").replace(/'/g, "\\'").substring(0, 30)}')">↩</button>${im ? `<button class="msg-action-btn" onclick="event.stopPropagation();startEdit(${m.id},'${(m.content || "").replace(/'/g, "\\'")}')">✏️</button>` : ""}<button class="msg-action-btn danger" onclick="event.stopPropagation();confirmDeleteMsg(${m.id})">🗑️</button></div></div>`;
               })
               .join("");
             document.getElementById("messages").scrollTop =
@@ -1250,10 +1331,10 @@
         } catch (e) {}
       }
 
-      function selectMessage(e, msgId, isMine, content) {
+      function selectMessage(e, id) {
         e.stopPropagation();
-        const el = document.getElementById(`msg-${msgId}`);
-        if (selectedMsg === msgId) {
+        const el = document.getElementById(`msg-${id}`);
+        if (selectedMsg === id) {
           el.classList.remove("selected");
           selectedMsg = null;
           return;
@@ -1262,9 +1343,8 @@
           .querySelectorAll(".message.selected")
           .forEach((m) => m.classList.remove("selected"));
         el.classList.add("selected");
-        selectedMsg = msgId;
+        selectedMsg = id;
       }
-
       document
         .getElementById("messages")
         .addEventListener("click", function (e) {
@@ -1276,105 +1356,137 @@
           }
         });
 
+      function clearPendingMedia() {
+        pendingMedia = [];
+        updateMediaPreview();
+      }
+      function handleMediaSelect(event) {
+        const files = Array.from(event.target.files);
+        files.forEach((f) => {
+          const reader = new FileReader();
+          reader.onload = function () {
+            pendingMedia.push({
+              data: reader.result,
+              type: f.type,
+              fileName: f.name,
+            });
+            updateMediaPreview();
+          };
+          reader.readAsDataURL(f);
+        });
+        event.target.value = "";
+        updateSendButton();
+      }
+      function updateMediaPreview() {
+        const c = document.getElementById("media-preview");
+        c.innerHTML = "";
+        if (pendingMedia.length === 0) {
+          c.classList.remove("active");
+          return;
+        }
+        c.classList.add("active");
+        pendingMedia.forEach((m, i) => {
+          const isVideo = m.type.startsWith("video/");
+          const el = isVideo
+            ? document.createElement("video")
+            : document.createElement("img");
+          el.src = m.data;
+          if (isVideo) {
+            el.muted = true;
+            el.playsInline = true;
+          }
+          c.appendChild(el);
+          const rm = document.createElement("button");
+          rm.className = "remove-media";
+          rm.textContent = "✕";
+          rm.onclick = function () {
+            pendingMedia.splice(i, 1);
+            updateMediaPreview();
+            updateSendButton();
+          };
+          c.appendChild(rm);
+        });
+      }
+      function updateSendButton() {
+        const hasText =
+          document.getElementById("message-input").value.trim().length > 0;
+        const hasMedia = pendingMedia.length > 0;
+        document
+          .getElementById("send-btn")
+          .classList.toggle("visible", hasText || hasMedia);
+        document
+          .getElementById("voice-btn")
+          .classList.toggle("hidden", hasText || hasMedia);
+      }
+      function handleInput() {
+        updateSendButton();
+        if (
+          currentChat &&
+          document.getElementById("message-input").value.trim().length > 0
+        )
+          handleTyping();
+      }
+
       function sendMessage() {
         const input = document.getElementById("message-input");
-        const message = input.value.trim();
-        if (!message && !editMsgId) return;
+        const caption = input.value.trim();
+        if (!caption && pendingMedia.length === 0 && !editMsgId) return;
         if (!currentChat) return;
         if (editMsgId) {
           socket.emit("edit-message", {
             messageId: editMsgId,
             chatId: currentChat.id,
-            content: message,
+            content: caption,
           });
           cancelEdit();
-        } else {
-          const msgData = {
+          input.value = "";
+          updateSendButton();
+          return;
+        }
+
+        if (pendingMedia.length > 0) {
+          pendingMedia.forEach((m) => {
+            let t = "file";
+            if (m.type.startsWith("image/")) t = "image";
+            else if (m.type.startsWith("video/")) t = "video";
+            else if (m.type.startsWith("audio/")) t = "audio";
+            const content = t === "image" || t === "video" ? caption : m.data; // медиа + подпись
+            const md = {
+              chatId: currentChat.id,
+              fromUser: currentUser,
+              message: content,
+              type: t,
+              fileName: m.fileName || m.data,
+            };
+            if (currentChat.type === "private") {
+              const tu = currentChat.members.find(
+                (x) => x.id !== currentUser.id,
+              );
+              socket.emit("private-message", { ...md, toUserId: tu.id });
+            } else
+              socket.emit("group-message", { ...md, groupId: currentChat.id });
+          });
+          pendingMedia = [];
+          updateMediaPreview();
+          input.value = "";
+        } else if (caption) {
+          const md = {
             chatId: currentChat.id,
             fromUser: currentUser,
-            message,
+            message: caption,
             replyTo: replyTo?.id,
           };
           if (currentChat.type === "private") {
-            const toUser = currentChat.members.find(
-              (m) => m.id !== currentUser.id,
-            );
-            socket.emit("private-message", { ...msgData, toUserId: toUser.id });
+            const tu = currentChat.members.find((m) => m.id !== currentUser.id);
+            socket.emit("private-message", { ...md, toUserId: tu.id });
           } else
-            socket.emit("group-message", {
-              ...msgData,
-              groupId: currentChat.id,
-            });
+            socket.emit("group-message", { ...md, groupId: currentChat.id });
           cancelReply();
+          input.value = "";
         }
-        input.value = "";
+        updateSendButton();
         stopTyping();
-        setTimeout(() => loadMessages(currentChat.id), 100);
-      }
-
-      async function sendMedia(event) {
-        const files = event.target.files;
-        if (!files.length || !currentChat) return;
-        for (let file of files) {
-          const reader = new FileReader();
-          reader.onload = function () {
-            let type = "file";
-            if (file.type.startsWith("image/")) type = "image";
-            else if (file.type.startsWith("video/")) type = "video";
-            else if (file.type.startsWith("audio/")) type = "audio";
-            const msgData = {
-              chatId: currentChat.id,
-              fromUser: currentUser,
-              message: reader.result,
-              type,
-              fileName: file.name,
-            };
-            if (currentChat.type === "private") {
-              const toUser = currentChat.members.find(
-                (m) => m.id !== currentUser.id,
-              );
-              socket.emit("private-message", {
-                ...msgData,
-                toUserId: toUser.id,
-              });
-            } else
-              socket.emit("group-message", {
-                ...msgData,
-                groupId: currentChat.id,
-              });
-          };
-          reader.readAsDataURL(file);
-        }
-        setTimeout(() => loadMessages(currentChat.id), 600);
-        event.target.value = "";
-      }
-
-      async function sendVideoCircle(event) {
-        const file = event.target.files[0];
-        if (!file || !currentChat) return;
-        const reader = new FileReader();
-        reader.onload = function () {
-          const msgData = {
-            chatId: currentChat.id,
-            fromUser: currentUser,
-            message: reader.result,
-            type: "video_circle",
-            fileName: "Кружок",
-          };
-          if (currentChat.type === "private") {
-            const toUser = currentChat.members.find(
-              (m) => m.id !== currentUser.id,
-            );
-            socket.emit("private-message", { ...msgData, toUserId: toUser.id });
-          } else
-            socket.emit("group-message", {
-              ...msgData,
-              groupId: currentChat.id,
-            });
-          setTimeout(() => loadMessages(currentChat.id), 600);
-        };
-        reader.readAsDataURL(file);
-        event.target.value = "";
+        setTimeout(() => loadMessages(currentChat.id), 200);
       }
 
       // ГОЛОСОВЫЕ
@@ -1390,13 +1502,14 @@
           });
           mediaRecorder = new MediaRecorder(stream);
           audioChunks = [];
+          voiceLocked = false;
           mediaRecorder.ondataavailable = (ev) => audioChunks.push(ev.data);
           mediaRecorder.onstop = () => {
             const blob = new Blob(audioChunks, { type: "audio/webm" });
             const reader = new FileReader();
             reader.onload = function () {
               if (currentChat) {
-                const msgData = {
+                const md = {
                   chatId: currentChat.id,
                   fromUser: currentUser,
                   message: reader.result,
@@ -1404,16 +1517,13 @@
                   fileName: "🎤 Голосовое",
                 };
                 if (currentChat.type === "private") {
-                  const toUser = currentChat.members.find(
+                  const tu = currentChat.members.find(
                     (m) => m.id !== currentUser.id,
                   );
-                  socket.emit("private-message", {
-                    ...msgData,
-                    toUserId: toUser.id,
-                  });
+                  socket.emit("private-message", { ...md, toUserId: tu.id });
                 } else
                   socket.emit("group-message", {
-                    ...msgData,
+                    ...md,
                     groupId: currentChat.id,
                   });
                 setTimeout(() => loadMessages(currentChat.id), 300);
@@ -1424,48 +1534,73 @@
           };
           mediaRecorder.start();
           recording = true;
-          voiceLocked = false;
           document.getElementById("voice-btn").classList.add("recording");
+          document.getElementById("voice-slider").classList.add("active");
         } catch (err) {
           showNotification("❌", "Нет доступа к микрофону");
         }
       }
       function moveVoice(e) {
         if (!recording || !e.touches || voiceLocked) return;
-        if (voiceStartY - e.touches[0].clientY > 60) lockVoice();
+        if (voiceStartY - e.touches[0].clientY > 80) lockVoice();
+      }
+      function toggleVoiceLock() {
+        voiceLocked = !voiceLocked;
+        document
+          .getElementById("voice-lock-btn")
+          .classList.toggle("locked", voiceLocked);
+        document.getElementById("voice-lock-btn").textContent = voiceLocked
+          ? "🔓"
+          : "🔒";
       }
       function lockVoice() {
         voiceLocked = true;
-        showNotification(
-          "🔒",
-          "Запись закреплена. Нажмите кнопку чтобы остановить",
-        );
+        document.getElementById("voice-lock-btn").classList.add("locked");
+        document.getElementById("voice-lock-btn").textContent = "🔓";
+        showNotification("🔒", "Запись закреплена");
       }
-      function stopVoice() {
+      function stopVoice(e) {
         if (!recording || voiceLocked) return;
         if (mediaRecorder && mediaRecorder.state === "recording") {
           mediaRecorder.stop();
           recording = false;
           document.getElementById("voice-btn").classList.remove("recording");
+          document.getElementById("voice-slider").classList.remove("active");
         }
+      }
+      function cancelVoice() {
+        if (!recording) return;
+        if (mediaRecorder && mediaRecorder.state === "recording") {
+          mediaRecorder.stop();
+          audioChunks = [];
+        }
+        recording = false;
+        voiceLocked = false;
+        document.getElementById("voice-btn").classList.remove("recording");
+        document.getElementById("voice-slider").classList.remove("active");
+        showNotification("❌", "Запись отменена");
       }
       document
         .getElementById("voice-btn")
         .addEventListener("click", function (e) {
           if (voiceLocked && recording) {
             e.preventDefault();
+            e.stopPropagation();
             if (mediaRecorder && mediaRecorder.state === "recording") {
               mediaRecorder.stop();
               recording = false;
               voiceLocked = false;
               this.classList.remove("recording");
+              document
+                .getElementById("voice-slider")
+                .classList.remove("active");
             }
           }
         });
 
-      function startReply(id, preview) {
-        replyTo = { id, content: preview };
-        document.getElementById("reply-text").textContent = preview || "...";
+      function startReply(id, p) {
+        replyTo = { id, content: p };
+        document.getElementById("reply-text").textContent = p || "...";
         document.getElementById("reply-bar").classList.add("active");
         document.getElementById("message-input").focus();
       }
@@ -1473,18 +1608,20 @@
         replyTo = null;
         document.getElementById("reply-bar").classList.remove("active");
       }
-      function startEdit(id, content) {
+      function startEdit(id, c) {
         editMsgId = id;
-        document.getElementById("message-input").value = content;
+        document.getElementById("message-input").value = c;
         document.getElementById("edit-text").textContent =
-          content.substring(0, 30) + "...";
+          c.substring(0, 30) + "...";
         document.getElementById("edit-bar").classList.add("active");
+        updateSendButton();
         document.getElementById("message-input").focus();
       }
       function cancelEdit() {
         editMsgId = null;
         document.getElementById("message-input").value = "";
         document.getElementById("edit-bar").classList.remove("active");
+        updateSendButton();
       }
       function saveEdit() {
         sendMessage();
@@ -1656,7 +1793,7 @@
           }
         } catch (e) {}
       }
-      async function startPrivateChat(username) {
+      async function startPrivateChat(u) {
         try {
           const r = await fetch("/api/chats", {
             method: "POST",
@@ -1664,7 +1801,7 @@
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify({ type: "private", username }),
+            body: JSON.stringify({ type: "private", username: u }),
           });
           const d = await r.json();
           if (d.success) {
@@ -1738,7 +1875,6 @@
         onlineUserIds.delete(data.userId);
         renderChats();
       });
-
       function updateTypingIndicator() {
         const el = document.getElementById("typing-indicator");
         const names = Object.values(typingUsers).map((u) => u.username);
