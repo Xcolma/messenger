@@ -6,6 +6,7 @@ const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const db = require("./db");
 const authRoutes = require("./routes/auth");
+const push = require("./push");
 
 const app = express();
 const server = http.createServer(app);
@@ -98,6 +99,18 @@ app.get("/api/chats/:id/messages", authMiddleware, async (req, res) => {
   }
 });
 
+// Push subscription endpoint
+app.post("/api/push/subscribe", authMiddleware, (req, res) => {
+  const subscription = req.body;
+  push.addSubscription(req.userId, subscription);
+  res.json({ success: true });
+});
+
+app.post("/api/push/unsubscribe", authMiddleware, (req, res) => {
+  push.removeSubscription(req.userId);
+  res.json({ success: true });
+});
+
 const onlineUsers = new Map();
 io.on("connection", (socket) => {
   socket.on("user-login", (userData) => {
@@ -108,6 +121,7 @@ io.on("connection", (socket) => {
     });
     io.emit("online-users", Array.from(onlineUsers.values()));
   });
+
   socket.on("private-message", (data) => {
     db.saveMessage({
       chatId: data.chatId,
@@ -115,6 +129,8 @@ io.on("connection", (socket) => {
       content: data.message,
       type: "private",
     });
+
+    let recipientOnline = false;
     for (let [socketId, user] of onlineUsers) {
       if (user.id === data.toUserId) {
         io.to(socketId).emit("private-message", {
@@ -123,15 +139,29 @@ io.on("connection", (socket) => {
           timestamp: new Date().toISOString(),
           chatId: data.chatId,
         });
+        recipientOnline = true;
         break;
       }
     }
+
+    // Если получатель не онлайн - отправить push
+    if (!recipientOnline) {
+      push.sendPushNotification(
+        data.toUserId,
+        data.fromUser.username,
+        data.message,
+        data.chatId,
+        "private",
+      );
+    }
+
     socket.emit("message-sent", {
       message: data.message,
       timestamp: new Date().toISOString(),
       chatId: data.chatId,
     });
   });
+
   socket.on("group-message", (data) => {
     db.saveMessage({
       chatId: data.groupId,
@@ -139,21 +169,36 @@ io.on("connection", (socket) => {
       content: data.message,
       type: "group",
     });
-    const members = db.getGroupMembers(data.groupId);
-    members.forEach((member) => {
-      if (member.id !== data.fromUser.id) {
-        for (let [socketId, user] of onlineUsers) {
-          if (user.id === member.id)
-            io.to(socketId).emit("group-message", {
-              groupId: data.groupId,
-              from: data.fromUser,
-              message: data.message,
-              timestamp: new Date().toISOString(),
-            });
+    db.getGroupMembers(data.groupId).then((members) => {
+      members.forEach((member) => {
+        if (member.id !== data.fromUser.id) {
+          let memberOnline = false;
+          for (let [socketId, user] of onlineUsers) {
+            if (user.id === member.id) {
+              io.to(socketId).emit("group-message", {
+                groupId: data.groupId,
+                from: data.fromUser,
+                message: data.message,
+                timestamp: new Date().toISOString(),
+              });
+              memberOnline = true;
+              break;
+            }
+          }
+          if (!memberOnline) {
+            push.sendPushNotification(
+              member.id,
+              data.groupId,
+              `${data.fromUser.username}: ${data.message}`,
+              data.groupId,
+              "group",
+            );
+          }
         }
-      }
+      });
     });
   });
+
   socket.on("disconnect", () => {
     onlineUsers.delete(socket.id);
     io.emit("online-users", Array.from(onlineUsers.values()));

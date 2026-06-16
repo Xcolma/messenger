@@ -3,124 +3,635 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Мессенджер — Чаты</title>
-    <link rel="stylesheet" href="/css/main.css" />
-    <link rel="stylesheet" href="/css/chat.css" />
-    <link rel="manifest" href="/manifest.json" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta
-      name="apple-mobile-web-app-status-bar-style"
-      content="black-translucent"
-    />
-    <meta name="apple-mobile-web-app-title" content="Мессенджер" />
-    <link
-      rel="apple-touch-icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='512' height='512' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='100' fill='%23007AFF'/%3E%3Ctext x='256' y='350' font-size='400' text-anchor='middle'%3E💬%3C/text%3E%3C/svg%3E"
-    />
-    <meta name="theme-color" content="#007AFF" />
+    <title>Мессенджер</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: #1a1a1a;
+        color: white;
+        height: 100vh;
+        display: flex;
+      }
+
+      .sidebar {
+        width: 350px;
+        background: #2d2d2d;
+        border-right: 1px solid #444;
+        display: flex;
+        flex-direction: column;
+      }
+      .sidebar-header {
+        padding: 20px;
+        border-bottom: 1px solid #444;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .sidebar-header h3 {
+        font-size: 18px;
+      }
+      .sidebar-header button {
+        background: #4caf50;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+      .search-box {
+        padding: 15px;
+      }
+      .search-box input {
+        width: 100%;
+        padding: 10px;
+        border: none;
+        border-radius: 8px;
+        background: #3d3d3d;
+        color: white;
+      }
+      .chats-list {
+        flex: 1;
+        overflow-y: auto;
+      }
+      .chat-item {
+        padding: 15px;
+        border-bottom: 1px solid #3d3d3d;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: background 0.2s;
+      }
+      .chat-item:hover {
+        background: #3d3d3d;
+      }
+      .chat-item.active {
+        background: #4caf50;
+      }
+      .chat-item .chat-info {
+        flex: 1;
+      }
+      .chat-item .chat-name {
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+      .chat-item .chat-last {
+        font-size: 12px;
+        opacity: 0.7;
+      }
+
+      .main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+      .chat-header {
+        padding: 20px;
+        border-bottom: 1px solid #444;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .chat-header h2 {
+        font-size: 20px;
+      }
+      .chat-header button {
+        background: #f44336;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-left: 10px;
+      }
+      .messages {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .message {
+        max-width: 60%;
+        padding: 10px 15px;
+        border-radius: 15px;
+        word-wrap: break-word;
+      }
+      .message.sent {
+        background: #4caf50;
+        align-self: flex-end;
+      }
+      .message.received {
+        background: #3d3d3d;
+        align-self: flex-start;
+      }
+      .message .sender {
+        font-size: 12px;
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+      .message .time {
+        font-size: 10px;
+        opacity: 0.7;
+        margin-top: 5px;
+      }
+      .message-input {
+        padding: 20px;
+        border-top: 1px solid #444;
+        display: flex;
+        gap: 10px;
+      }
+      .message-input input {
+        flex: 1;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        background: #3d3d3d;
+        color: white;
+      }
+      .message-input button {
+        background: #4caf50;
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+      }
+      .message-input button:hover {
+        background: #45a049;
+      }
+
+      .empty-chat {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 18px;
+        opacity: 0.5;
+      }
+
+      /* Стили для уведомлений */
+      #notifications-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .notification-toast {
+        background: #2d2d2d;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        min-width: 300px;
+        animation: slideIn 0.3s ease;
+        position: relative;
+        border-left: 4px solid #4caf50;
+        cursor: pointer;
+      }
+      .notification-toast.group {
+        border-left-color: #2196f3;
+      }
+      .notification-toast .sender {
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+      .notification-toast .message-preview {
+        opacity: 0.8;
+        font-size: 14px;
+      }
+      .notification-toast .close-btn {
+        position: absolute;
+        top: 5px;
+        right: 10px;
+        background: none;
+        border: none;
+        color: white;
+        cursor: pointer;
+        opacity: 0.5;
+        font-size: 16px;
+      }
+      .notification-toast .close-btn:hover {
+        opacity: 1;
+      }
+      @keyframes slideIn {
+        from {
+          transform: translateX(400px);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+      @keyframes slideOut {
+        from {
+          transform: translateX(0);
+          opacity: 1;
+        }
+        to {
+          transform: translateX(400px);
+          opacity: 0;
+        }
+      }
+    </style>
   </head>
   <body>
-    <div id="app" class="app-container">
-      <aside class="sidebar">
-        <div class="sidebar-header">
-          <h2>Сообщения</h2>
-          <button id="newChatBtn" class="btn-icon" title="Новый чат">+</button>
-        </div>
-        <div class="search-bar">
-          <input type="text" id="searchInput" placeholder="Поиск..." />
-        </div>
-        <div id="chatList" class="chat-list"></div>
-        <div class="sidebar-footer">
-          <span id="currentUserName"></span
-          ><button id="logoutBtn" class="btn btn-small">Выйти</button>
-        </div>
-      </aside>
-      <main class="chat-main">
-        <div id="noChatSelected" class="no-chat">
-          <svg
-            width="80"
-            height="80"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#C7C7CC"
-            stroke-width="1.5"
-          >
-            <path
-              d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
-            ></path>
-          </svg>
-          <p>Выберите чат или создайте новый</p>
-        </div>
-        <div id="activeChat" class="active-chat" style="display: none">
-          <div class="chat-header">
-            <button id="backBtn" class="btn-back">←</button>
-            <div>
-              <div id="chatName" class="chat-name"></div>
-              <div id="chatStatus" class="chat-status"></div>
-            </div>
-          </div>
-          <div id="messagesContainer" class="messages-container"></div>
-          <div class="message-input-bar">
-            <input
-              type="text"
-              id="messageInput"
-              placeholder="Сообщение..."
-              autocomplete="off"
-            /><button id="sendBtn" class="btn-send">
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
-                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      </main>
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h3>💬 Мессенджер</h3>
+        <button onclick="createGroup()">+ Группа</button>
+      </div>
+      <div class="search-box">
+        <input
+          type="text"
+          id="search-input"
+          placeholder="🔍 Поиск пользователей..."
+          onkeyup="searchUsers()"
+        />
+      </div>
+      <div id="chats-list" class="chats-list"></div>
+      <div style="padding: 15px; border-top: 1px solid #444">
+        <button
+          onclick="logout()"
+          style="
+            width: 100%;
+            padding: 10px;
+            background: #f44336;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+          "
+        >
+          🚪 Выйти
+        </button>
+      </div>
     </div>
-    <div id="modal" class="modal" style="display: none">
-      <div class="modal-content">
-        <h3 id="modalTitle"></h3>
-        <div id="modalBody"></div>
-        <div class="modal-actions">
-          <button id="modalCancel" class="btn">Отмена</button
-          ><button id="modalConfirm" class="btn btn-primary">Создать</button>
+
+    <div class="main">
+      <div id="chat-area" class="empty-chat">
+        <p>Выберите чат или создайте новый</p>
+      </div>
+      <div
+        id="chat-view"
+        style="display: none; flex-direction: column; height: 100%"
+      >
+        <div class="chat-header">
+          <h2 id="chat-title"></h2>
+          <button onclick="closeChat()">✕ Закрыть</button>
+        </div>
+        <div id="messages" class="messages"></div>
+        <div class="message-input">
+          <input
+            type="text"
+            id="message-input"
+            placeholder="Введите сообщение..."
+            onkeypress="if (event.key === 'Enter') sendMessage();"
+          />
+          <button onclick="sendMessage()">Отправить</button>
         </div>
       </div>
     </div>
 
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="/js/api.js"></script>
-    <script src="/js/socket.js"></script>
-    <script src="/js/ui.js"></script>
-    <script src="/js/chat.js"></script>
+    <!-- Контейнер для уведомлений -->
+    <div id="notifications-container"></div>
 
+    <script src="/socket.io/socket.io.js"></script>
     <script>
-      if ("serviceWorker" in navigator) {
-        navigator.serviceWorker
-          .register("/sw.js")
-          .then(() => console.log("SW зарегистрирован"))
-          .catch((err) => console.log("SW ошибка:", err));
+      const token = localStorage.getItem("token");
+      const currentUser = JSON.parse(localStorage.getItem("user"));
+
+      if (!token || !currentUser) {
+        window.location.href = "/";
       }
 
-      window.addEventListener("beforeinstallprompt", (e) => {
-        e.preventDefault();
-        window.deferredPrompt = e;
+      const socket = io();
+      let currentChat = null;
+      let chats = [];
 
-        const installBtn = document.createElement("button");
-        installBtn.textContent = "📱 Установить приложение";
-        installBtn.style.cssText =
-          "position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:14px 24px;background:#007AFF;color:white;border:none;border-radius:25px;font-size:16px;font-weight:600;cursor:pointer;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.3);";
-        installBtn.addEventListener("click", () => {
-          window.deferredPrompt.prompt();
-          window.deferredPrompt.userChoice.then(() => {
-            installBtn.remove();
+      // In-app уведомления
+      function showNotification(
+        title,
+        message,
+        type = "private",
+        chatId = null,
+      ) {
+        const container = document.getElementById("notifications-container");
+        const toast = document.createElement("div");
+        toast.className = `notification-toast ${type}`;
+        toast.innerHTML = `
+        <div class="sender">${title}</div>
+        <div class="message-preview">${message}</div>
+        <button class="close-btn" onclick="event.stopPropagation(); this.parentElement.remove()">✕</button>
+      `;
+
+        if (chatId) {
+          toast.addEventListener("click", (e) => {
+            if (e.target.classList.contains("close-btn")) return;
+            if (type === "private") {
+              openPrivateChat(chatId);
+            } else {
+              openGroupChat(chatId);
+            }
+            toast.remove();
           });
-        });
-        document.body.appendChild(installBtn);
+        }
+
+        container.appendChild(toast);
+        setTimeout(() => {
+          if (toast.parentElement) {
+            toast.style.animation = "slideOut 0.3s ease forwards";
+            setTimeout(() => toast.remove(), 300);
+          }
+        }, 5000);
+      }
+
+      // Web Push подписка
+      async function subscribeToPush() {
+        if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+          console.log("Push уведомления не поддерживаются");
+          return;
+        }
+
+        try {
+          const registration = await navigator.serviceWorker.register("/sw.js");
+          const subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(
+              "BEl62iIwu0C5PD0YqGj7c2qJz4YH5k0XkSMXgL7oRv6ZlL0k0c8dLwM3fYj9zQ5BvN3fR8tG7vB2cD4eF6gH8",
+            ),
+          });
+
+          await fetch("/api/push/subscribe", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(subscription),
+          });
+          console.log("Push подписка оформлена");
+        } catch (error) {
+          console.log("Push подписка не удалась:", error);
+        }
+      }
+
+      function urlBase64ToUint8Array(base64String) {
+        const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+        const base64 = (base64String + padding)
+          .replace(/\-/g, "+")
+          .replace(/_/g, "/");
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+        for (let i = 0; i < rawData.length; ++i) {
+          outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
+      }
+
+      socket.emit("user-login", {
+        id: currentUser.id,
+        username: currentUser.username,
       });
+
+      async function loadChats() {
+        try {
+          const res = await fetch("/api/chats", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const data = await res.json();
+          if (data.success) {
+            chats = data.chats;
+            renderChats();
+          }
+        } catch (error) {
+          console.error("Ошибка загрузки чатов:", error);
+        }
+      }
+
+      function renderChats() {
+        const container = document.getElementById("chats-list");
+        container.innerHTML = chats
+          .map(
+            (chat) => `
+        <div class="chat-item ${currentChat && currentChat.id === chat.id ? "active" : ""}" onclick="openChat(${chat.id})">
+          <div class="chat-info">
+            <div class="chat-name">${chat.name || chat.members.find((m) => m.id !== currentUser.id)?.display_name || "Чат"}</div>
+            <div class="chat-last">${chat.last_message || "Нет сообщений"}</div>
+          </div>
+        </div>
+      `,
+          )
+          .join("");
+      }
+
+      function openChat(chatId) {
+        currentChat = chats.find((c) => c.id === chatId);
+        if (!currentChat) return;
+
+        document.getElementById("chat-area").style.display = "none";
+        document.getElementById("chat-view").style.display = "flex";
+        document.getElementById("chat-title").textContent =
+          currentChat.name ||
+          currentChat.members.find((m) => m.id !== currentUser.id)
+            ?.display_name ||
+          "Чат";
+        loadMessages(chatId);
+        renderChats();
+      }
+
+      async function loadMessages(chatId) {
+        try {
+          const res = await fetch(`/api/chats/${chatId}/messages`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const data = await res.json();
+          if (data.success) {
+            const container = document.getElementById("messages");
+            container.innerHTML = data.messages
+              .map(
+                (msg) => `
+            <div class="message ${msg.sender_id === currentUser.id ? "sent" : "received"}">
+              ${msg.sender_id !== currentUser.id ? `<div class="sender">${msg.username}</div>` : ""}
+              <div>${msg.content}</div>
+              <div class="time">${new Date(msg.created_at).toLocaleTimeString()}</div>
+            </div>
+          `,
+              )
+              .join("");
+            container.scrollTop = container.scrollHeight;
+          }
+        } catch (error) {
+          console.error("Ошибка загрузки сообщений:", error);
+        }
+      }
+
+      function sendMessage() {
+        const input = document.getElementById("message-input");
+        const message = input.value.trim();
+        if (!message || !currentChat) return;
+
+        if (currentChat.type === "private") {
+          const toUser = currentChat.members.find(
+            (m) => m.id !== currentUser.id,
+          );
+          socket.emit("private-message", {
+            chatId: currentChat.id,
+            fromUser: currentUser,
+            toUserId: toUser.id,
+            message,
+          });
+        } else {
+          socket.emit("group-message", {
+            groupId: currentChat.id,
+            fromUser: currentUser,
+            message,
+          });
+        }
+
+        input.value = "";
+        loadMessages(currentChat.id);
+      }
+
+      function closeChat() {
+        currentChat = null;
+        document.getElementById("chat-area").style.display = "flex";
+        document.getElementById("chat-view").style.display = "none";
+        renderChats();
+      }
+
+      async function createGroup() {
+        const name = prompt("Название группы:");
+        if (!name) return;
+        try {
+          const res = await fetch("/api/chats", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ type: "group", groupName: name }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            await loadChats();
+            openChat(data.chat.id);
+          }
+        } catch (error) {
+          console.error("Ошибка создания группы:", error);
+        }
+      }
+
+      async function searchUsers() {
+        const q = document.getElementById("search-input").value.trim();
+        if (!q) return loadChats();
+        try {
+          const res = await fetch(
+            `/api/auth/search?q=${q}&userId=${currentUser.id}`,
+            { headers: { Authorization: `Bearer ${token}` } },
+          );
+          const data = await res.json();
+          if (data.success) {
+            const container = document.getElementById("chats-list");
+            container.innerHTML = data.users
+              .map(
+                (user) => `
+            <div class="chat-item" onclick="startPrivateChat('${user.username}')">
+              <div class="chat-info">
+                <div class="chat-name">${user.display_name || user.username}</div>
+                <div class="chat-last">@${user.username}</div>
+              </div>
+            </div>
+          `,
+              )
+              .join("");
+          }
+        } catch (error) {
+          console.error("Ошибка поиска:", error);
+        }
+      }
+
+      async function startPrivateChat(username) {
+        try {
+          const res = await fetch("/api/chats", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ type: "private", username }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            await loadChats();
+            openChat(data.chat.id);
+          }
+        } catch (error) {
+          console.error("Ошибка создания чата:", error);
+        }
+      }
+
+      function openPrivateChat(chatId) {
+        const chat = chats.find((c) => c.id === chatId);
+        if (chat) openChat(chatId);
+      }
+
+      function openGroupChat(chatId) {
+        const chat = chats.find((c) => c.id === chatId);
+        if (chat) openChat(chatId);
+      }
+
+      function logout() {
+        localStorage.clear();
+        window.location.href = "/";
+      }
+
+      socket.on("private-message", (data) => {
+        if (currentChat && currentChat.id === data.chatId) {
+          loadMessages(currentChat.id);
+        } else {
+          showNotification(
+            data.from.username || data.from.display_name,
+            data.message,
+            "private",
+            data.chatId,
+          );
+          loadChats();
+        }
+      });
+
+      socket.on("group-message", (data) => {
+        if (currentChat && currentChat.id === data.groupId) {
+          loadMessages(currentChat.id);
+        } else {
+          showNotification(
+            data.from.username,
+            data.message,
+            "group",
+            data.groupId,
+          );
+          loadChats();
+        }
+      });
+
+      socket.on("online-users", (users) => {
+        console.log("Онлайн:", users.length);
+      });
+
+      // Запуск
+      loadChats();
+      subscribeToPush();
     </script>
   </body>
 </html>
