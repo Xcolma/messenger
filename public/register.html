@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Мессенджер — Регистрация</title>
+    <link rel="stylesheet" href="/css/main.css" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="apple-mobile-web-app-title" content="Мессенджер" />
+    <link
+      rel="apple-touch-icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='512' height='512' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='100' fill='%23007AFF'/%3E%3Ctext x='256' y='350' font-size='400' text-anchor='middle'%3E💬%3C/text%3E%3C/svg%3E"
+    />
+    <meta name="theme-color" content="#007AFF" />
+  </head>
+  <body>
+    <div class="auth-container">
+      <div class="auth-card">
+        <div class="auth-icon">
+          <svg
+            width="60"
+            height="60"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#34C759"
+            stroke-width="2"
+          >
+            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="8.5" cy="7" r="4"></circle>
+            <line x1="20" y1="8" x2="20" y2="14"></line>
+            <line x1="23" y1="11" x2="17" y2="11"></line>
+          </svg>
+        </div>
+        <h1 class="auth-title">Регистрация</h1>
+        <p class="auth-subtitle">Создайте аккаунт для общения</p>
+        <form id="registerForm" class="auth-form">
+          <div class="input-group">
+            <label for="username">Логин</label
+            ><input
+              type="text"
+              id="username"
+              placeholder="Придумайте логин"
+              required
+              minlength="3"
+            />
+          </div>
+          <div class="input-group">
+            <label for="displayName">Имя</label
+            ><input
+              type="text"
+              id="displayName"
+              placeholder="Ваше отображаемое имя"
+            />
+          </div>
+          <div class="input-group">
+            <label for="password">Пароль</label
+            ><input
+              type="password"
+              id="password"
+              placeholder="Придумайте пароль"
+              required
+              minlength="4"
+            />
+          </div>
+          <div class="input-group">
+            <label for="confirmPassword">Подтверждение</label
+            ><input
+              type="password"
+              id="confirmPassword"
+              placeholder="Повторите пароль"
+              required
+            />
+          </div>
+          <div
+            id="errorMessage"
+            class="error-message"
+            style="display: none"
+          ></div>
+          <button type="submit" class="btn btn-primary btn-full">
+            Зарегистрироваться
+          </button>
+          <p class="auth-link">Уже есть аккаунт? <a href="/">Войти</a></p>
+        </form>
+      </div>
+    </div>
+    <script src="/js/api.js"></script>
+    <script src="/js/auth.js"></script>
+    <script>
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/sw.js");
+      }
+    </script>
+  </body>
+</html>

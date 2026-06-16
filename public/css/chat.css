@@ -1,0 +1,192 @@
+/* ============================================
+   СТИЛИ СООБЩЕНИЙ В ЧАТЕ
+   ============================================ */
+
+/* --- Пузыри сообщений --- */
+.message-wrapper {
+  display: flex;
+  margin-bottom: 4px;
+  max-width: 75%;
+}
+
+.message-wrapper.sent {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.message-wrapper.received {
+  align-self: flex-start;
+}
+
+.message-bubble {
+  padding: 10px 14px;
+  border-radius: var(--radius-lg);
+  font-size: 16px;
+  line-height: 1.4;
+  word-wrap: break-word;
+  position: relative;
+}
+
+/* Отправленное сообщение (синее) */
+.message-wrapper.sent .message-bubble {
+  background: var(--ios-message-sent);
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+/* Полученное сообщение (серое) */
+.message-wrapper.received .message-bubble {
+  background: var(--ios-message-received);
+  color: var(--ios-dark);
+  border-bottom-left-radius: 4px;
+}
+
+/* Информация о сообщении */
+.message-info {
+  font-size: 11px;
+  margin-top: 2px;
+  opacity: 0.7;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.message-wrapper.sent .message-info {
+  justify-content: flex-end;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.message-wrapper.received .message-info {
+  color: var(--ios-gray);
+}
+
+.message-sender {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 2px;
+  color: var(--ios-blue);
+}
+
+/* Разделитель даты */
+.date-divider {
+  text-align: center;
+  font-size: 12px;
+  color: var(--ios-gray);
+  padding: 12px 0;
+  text-transform: lowercase;
+}
+
+/* Индикатор "печатает" */
+.typing-indicator {
+  padding: 8px 16px;
+  font-size: 13px;
+  color: var(--ios-gray);
+  font-style: italic;
+}
+
+/* Скроллбар */
+.messages-container::-webkit-scrollbar {
+  width: 4px;
+}
+
+.messages-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.messages-container::-webkit-scrollbar-thumb {
+  background: #d1d1d6;
+  border-radius: 4px;
+}
+
+/* Аватар в сообщениях */
+.message-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #e5e5ea;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ios-gray);
+  margin: 0 8px;
+  flex-shrink: 0;
+  align-self: flex-end;
+}
+
+/* Модальное окно поиска пользователей */
+.user-search-results {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.user-search-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  gap: 12px;
+}
+
+.user-search-item:hover {
+  background: var(--ios-light-gray);
+}
+
+.user-search-item.selected {
+  background: rgba(0, 122, 255, 0.1);
+}
+
+/* Чекбокс для выбора участников */
+.member-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+}
+
+.member-checkbox input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--ios-blue);
+}
+
+/* Поле для названия группы */
+.group-name-input {
+  margin-bottom: 16px;
+}
+
+.group-name-input input {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 16px;
+  border: 1.5px solid var(--ios-border);
+  border-radius: var(--radius-md);
+  outline: none;
+  font-family: inherit;
+}
+
+.group-name-input input:focus {
+  border-color: var(--ios-blue);
+}
+
+/* Кнопка создания группы в сайдбаре */
+.create-group-btn {
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0;
+  border: 2px dashed var(--ios-border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--ios-blue);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.create-group-btn:hover {
+  background: rgba(0, 122, 255, 0.05);
+  border-color: var(--ios-blue);
+}

@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Мессенджер — Чаты</title>
+    <link rel="stylesheet" href="/css/main.css" />
+    <link rel="stylesheet" href="/css/chat.css" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="apple-mobile-web-app-title" content="Мессенджер" />
+    <link
+      rel="apple-touch-icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='512' height='512' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='100' fill='%23007AFF'/%3E%3Ctext x='256' y='350' font-size='400' text-anchor='middle'%3E💬%3C/text%3E%3C/svg%3E"
+    />
+    <meta name="theme-color" content="#007AFF" />
+  </head>
+  <body>
+    <div id="app" class="app-container">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <h2>Сообщения</h2>
+          <button id="newChatBtn" class="btn-icon" title="Новый чат">+</button>
+        </div>
+        <div class="search-bar">
+          <input type="text" id="searchInput" placeholder="Поиск..." />
+        </div>
+        <div id="chatList" class="chat-list"></div>
+        <div class="sidebar-footer">
+          <span id="currentUserName"></span
+          ><button id="logoutBtn" class="btn btn-small">Выйти</button>
+        </div>
+      </aside>
+      <main class="chat-main">
+        <div id="noChatSelected" class="no-chat">
+          <svg
+            width="80"
+            height="80"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#C7C7CC"
+            stroke-width="1.5"
+          >
+            <path
+              d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+            ></path>
+          </svg>
+          <p>Выберите чат или создайте новый</p>
+        </div>
+        <div id="activeChat" class="active-chat" style="display: none">
+          <div class="chat-header">
+            <button id="backBtn" class="btn-back">←</button>
+            <div>
+              <div id="chatName" class="chat-name"></div>
+              <div id="chatStatus" class="chat-status"></div>
+            </div>
+          </div>
+          <div id="messagesContainer" class="messages-container"></div>
+          <div class="message-input-bar">
+            <input
+              type="text"
+              id="messageInput"
+              placeholder="Сообщение..."
+              autocomplete="off"
+            /><button id="sendBtn" class="btn-send">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+    <div id="modal" class="modal" style="display: none">
+      <div class="modal-content">
+        <h3 id="modalTitle"></h3>
+        <div id="modalBody"></div>
+        <div class="modal-actions">
+          <button id="modalCancel" class="btn">Отмена</button
+          ><button id="modalConfirm" class="btn btn-primary">Создать</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/socket.js"></script>
+    <script src="/js/ui.js"></script>
+    <script src="/js/chat.js"></script>
+
+    <script>
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker
+          .register("/sw.js")
+          .then(() => console.log("SW зарегистрирован"))
+          .catch((err) => console.log("SW ошибка:", err));
+      }
+
+      window.addEventListener("beforeinstallprompt", (e) => {
+        e.preventDefault();
+        window.deferredPrompt = e;
+
+        const installBtn = document.createElement("button");
+        installBtn.textContent = "📱 Установить приложение";
+        installBtn.style.cssText =
+          "position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:14px 24px;background:#007AFF;color:white;border:none;border-radius:25px;font-size:16px;font-weight:600;cursor:pointer;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.3);";
+        installBtn.addEventListener("click", () => {
+          window.deferredPrompt.prompt();
+          window.deferredPrompt.userChoice.then(() => {
+            installBtn.remove();
+          });
+        });
+        document.body.appendChild(installBtn);
+      });
+    </script>
+  </body>
+</html>
