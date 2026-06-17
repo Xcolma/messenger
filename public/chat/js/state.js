@@ -52,8 +52,7 @@ function updateUIVisibility() {
   const bn = document.getElementById("bottom-nav");
   if (!bn) return;
 
-  const showNav =
-    (currentTab === "chats" && !currentChat) || currentTab === "settings";
+  const showNav = currentTab === "settings";
   bn.classList.toggle("visible", showNav);
 }
 
@@ -75,19 +74,33 @@ function switchTab(tab) {
   sp.classList.remove("active");
 
   if (tab === "chats") {
-    // Сбрасываем currentChat при переходе в список чатов
-    currentChat = null;
+    // НЕ сбрасываем currentChat — он нужен для отображения открытого чата
 
-    es.style.display = "flex";
-    cv.classList.remove("active");
+    if (currentChat) {
+      // Если чат открыт — показываем его
+      es.style.display = "none";
+      cv.classList.add("active");
+      document.getElementById("header-title").textContent =
+        getChatName(currentChat);
 
-    document.getElementById("header-title").textContent = "💬 Мессенджер";
+      // На мобилке показываем чат
+      if (window.innerWidth < 769) {
+        document.getElementById("chats-panel").classList.add("hide");
+        document.getElementById("right-panel").classList.add("show");
+        document.getElementById("back-btn").classList.add("show");
+      }
+    } else {
+      // Если чат не открыт — показываем список чатов
+      es.style.display = "flex";
+      cv.classList.remove("active");
+      document.getElementById("header-title").textContent = "💬 Мессенджер";
 
-    // На мобилке показываем список чатов
-    if (window.innerWidth < 769) {
-      document.getElementById("chats-panel").classList.remove("hide");
-      document.getElementById("right-panel").classList.remove("show");
-      document.getElementById("back-btn").classList.remove("show");
+      // На мобилке показываем список чатов
+      if (window.innerWidth < 769) {
+        document.getElementById("chats-panel").classList.remove("hide");
+        document.getElementById("right-panel").classList.remove("show");
+        document.getElementById("back-btn").classList.remove("show");
+      }
     }
 
     renderChats();
