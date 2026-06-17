@@ -11,38 +11,64 @@ async function loadMessages(chatId) {
           let icon = isMine ? (msg.status === "read" ? "✓✓" : "✓") : "";
           let content = "";
 
+          // Ответ на сообщение
           if (msg.reply_to) {
             const rp = data.messages.find((x) => x.id === msg.reply_to);
             if (rp)
-              content += `<div class="msg-reply" onclick="scrollToMsg(${rp.id})">↩ ${(rp.content || "[Медиа]").substring(0, 40)}</div>`;
+              content += `<div class="msg-reply" onclick="scrollToMsg(${rp.id})">↩ ${(rp.content || rp.file_name || "[Медиа]").substring(0, 40)}</div>`;
           }
 
           let mediaHtml = "";
+
+          // Изображения и видео
           if (msg.type === "image" || msg.type === "video") {
             mediaHtml += '<div class="msg-media-wrapper">';
             if (msg.type === "image") {
-              mediaHtml += `<img src="${msg.content}" class="msg-media" onclick="window.open('${msg.content}')">`;
+              mediaHtml += `<img src="${msg.content}" class="msg-media" onclick="window.open('${msg.content}')" loading="lazy">`;
             } else {
               mediaHtml += `<video src="${msg.content}" class="msg-media" controls playsinline onclick="event.stopPropagation()"></video>`;
             }
             mediaHtml += "</div>";
             if (msg.caption)
               mediaHtml += `<div class="msg-media-caption">${msg.caption}</div>`;
-          } else if (msg.type === "audio") {
-            mediaHtml += `<div class="msg-audio"><audio controls src="${msg.content}"></audio></div>`;
-          } else if (msg.type === "file") {
+          }
+          // Аудиосообщения (Telegram-стиль)
+          else if (msg.type === "audio") {
+            const duration = msg.duration || 0;
+            const mins = Math.floor(duration / 60);
+            const secs = Math.floor(duration % 60);
+            const durationText = `${mins}:${secs.toString().padStart(2, "0")}`;
+
+            mediaHtml += `
+              <div class="msg-audio-telegram" onclick="toggleAudio(event, 'audio-${msg.id}')">
+                <div class="audio-play-btn" id="audio-btn-${msg.id}">▶</div>
+                <div class="audio-wave-container">
+                  <div class="audio-wave-track">
+                    <div class="audio-wave-progress" id="audio-progress-${msg.id}"></div>
+                  </div>
+                </div>
+                <div class="audio-duration" id="audio-duration-${msg.id}">${durationText}</div>
+                <audio id="audio-${msg.id}" src="${msg.content}" preload="metadata" style="display:none"></audio>
+              </div>`;
+          }
+          // Файлы
+          else if (msg.type === "file") {
             mediaHtml += `<div class="msg-file">📎 <a href="${msg.content}" target="_blank">${msg.file_name || "файл"}</a></div>`;
-          } else {
-            content += `<span>${msg.content}</span>`;
+          }
+          // Текст
+          else {
+            content += `<span>${escapeHtml(msg.content || "")}</span>`;
           }
 
           if (msg.edited) content += ' <span class="edited-tag">изм.</span>';
 
-          const safeContent = (msg.content || "").replace(/'/g, "\\'");
+          const safeContent = (msg.content || "")
+            .replace(/'/g, "\\'")
+            .substring(0, 30);
 
           return `<div class="message ${isMine ? "sent" : "received"}" id="msg-${msg.id}" onclick="selectMessage(event,${msg.id})">
           <div class="message-inner">
-            ${!isMine ? `<div class="msg-sender">${msg.username}</div>` : ""}
+            ${!isMine ? `<div class="msg-sender">${msg.display_name || msg.username}</div>` : ""}
             ${mediaHtml}
             ${content}
             <div class="msg-time-status">
@@ -51,7 +77,7 @@ async function loadMessages(chatId) {
             </div>
           </div>
           <div class="msg-actions-overlay">
-            <button class="msg-action-btn" onclick="event.stopPropagation();startReply(${msg.id},'${safeContent.substring(0, 30)}')">↩</button>
+            <button class="msg-action-btn" onclick="event.stopPropagation();startReply(${msg.id},'${safeContent}')">↩</button>
             ${isMine ? `<button class="msg-action-btn" onclick="event.stopPropagation();startEdit(${msg.id},'${safeContent}')">✏️</button>` : ""}
             <button class="msg-action-btn danger" onclick="event.stopPropagation();confirmDeleteMsg(${msg.id})">🗑️</button>
           </div>
@@ -61,8 +87,74 @@ async function loadMessages(chatId) {
 
       document.getElementById("messages").scrollTop =
         document.getElementById("messages").scrollHeight;
+
+      // Привязываем обработчики аудио после рендера
+      bindAudioEvents();
     }
-  } catch (e) {}
+  } catch (e) {
+    console.error("Ошибка загрузки сообщений:", e);
+  }
+}
+
+// Безопасный HTML
+function escapeHtml(text) {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// Управление аудиосообщениями
+function toggleAudio(event, audioId) {
+  event.stopPropagation();
+  const audio = document.getElementById(audioId);
+  const btn = document.getElementById(`audio-btn-${audioId}`);
+  const progress = document.getElementById(`audio-progress-${audioId}`);
+  const duration = document.getElementById(`audio-duration-${audioId}`);
+
+  if (!audio) return;
+
+  // Остановить все остальные аудио
+  document.querySelectorAll("audio").forEach((a) => {
+    if (a.id !== audioId && !a.paused) {
+      a.pause();
+      const otherBtn = document.getElementById(`audio-btn-${a.id}`);
+      if (otherBtn) otherBtn.textContent = "▶";
+    }
+  });
+
+  if (audio.paused) {
+    audio.play();
+    btn.textContent = "⏸";
+
+    audio.ontimeupdate = () => {
+      if (audio.duration) {
+        const percent = (audio.currentTime / audio.duration) * 100;
+        progress.style.width = percent + "%";
+
+        const remaining = audio.duration - audio.currentTime;
+        const mins = Math.floor(remaining / 60);
+        const secs = Math.floor(remaining % 60);
+        duration.textContent = `${mins}:${secs.toString().padStart(2, "0")}`;
+      }
+    };
+
+    audio.onended = () => {
+      btn.textContent = "▶";
+      progress.style.width = "0%";
+      // Восстановить исходную длительность
+      const origDuration = audio.duration || 0;
+      const mins = Math.floor(origDuration / 60);
+      const secs = Math.floor(origDuration % 60);
+      duration.textContent = `${mins}:${secs.toString().padStart(2, "0")}`;
+    };
+  } else {
+    audio.pause();
+    btn.textContent = "▶";
+  }
+}
+
+function bindAudioEvents() {
+  // Ничего дополнительно не нужно, всё через onclick
 }
 
 function selectMessage(e, id) {
@@ -96,6 +188,7 @@ function sendMessage() {
   if (!caption && pendingMedia.length === 0 && !editMsgId) return;
   if (!currentChat) return;
 
+  // Редактирование
   if (editMsgId) {
     socket.emit("edit-message", {
       messageId: editMsgId,
@@ -108,6 +201,7 @@ function sendMessage() {
     return;
   }
 
+  // Отправка медиа
   if (pendingMedia.length > 0) {
     pendingMedia.forEach((m) => {
       let type = "file";
@@ -135,7 +229,9 @@ function sendMessage() {
     pendingMedia = [];
     updateMediaPreview();
     input.value = "";
-  } else if (caption) {
+  }
+  // Отправка текста
+  else if (caption) {
     const msgData = {
       chatId: currentChat.id,
       fromUser: currentUser,
@@ -209,6 +305,8 @@ async function deleteMessage() {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (currentChat) loadMessages(currentChat.id);
-  } catch (e) {}
+  } catch (e) {
+    console.error("Ошибка удаления:", e);
+  }
   closeDeleteMsgModal();
 }

@@ -16,8 +16,16 @@ const io = socketIo(server, {
 
 app.use(cors());
 app.use(express.json({ limit: "50mb" }));
-app.use(express.static("public"));
-app.use("/chat", express.static("public/chat"));
+app.use(express.static(path.join(__dirname, "..", "public")));
+app.use(
+  "/chat/css",
+  express.static(path.join(__dirname, "..", "public", "chat", "css")),
+);
+app.use(
+  "/chat/js",
+  express.static(path.join(__dirname, "..", "public", "chat", "js")),
+);
+app.use("/chat", express.static(path.join(__dirname, "..", "public", "chat")));
 
 app.get("/", (req, res) =>
   res.sendFile(path.join(__dirname, "..", "public", "index.html")),
@@ -236,11 +244,12 @@ io.on("connection", (socket) => {
     const saved = await db.saveMessage({
       chatId: data.chatId,
       senderId: data.fromUser.id,
-      content: data.content || data.message,
+      content: data.content || data.message || "",
       type: data.type || "text",
       status: "sent",
-      replyTo: data.replyTo,
-      fileName: data.fileName,
+      replyTo: data.replyTo || null,
+      fileName: data.fileName || null,
+      duration: data.duration || null,
     });
     let recipientOnline = false;
     for (let [socketId, user] of onlineUsers) {
@@ -256,6 +265,7 @@ io.on("connection", (socket) => {
           fileName: data.fileName,
           content: data.content,
           caption: data.caption,
+          duration: data.duration,
         });
         recipientOnline = true;
         break;
@@ -265,7 +275,9 @@ io.on("connection", (socket) => {
       push.sendPushNotification(
         data.toUserId,
         data.fromUser.username,
-        data.message?.substring(0, 100) || "[Медиа]",
+        data.type === "audio"
+          ? "🎤 Голосовое сообщение"
+          : data.message?.substring(0, 100) || "[Медиа]",
         data.chatId,
         "private",
       );
@@ -275,6 +287,7 @@ io.on("connection", (socket) => {
       chatId: data.chatId,
       messageId: saved.id,
       status: recipientOnline ? "delivered" : "sent",
+      duration: data.duration,
     });
   });
 
@@ -282,11 +295,12 @@ io.on("connection", (socket) => {
     const saved = await db.saveMessage({
       chatId: data.groupId,
       senderId: data.fromUser.id,
-      content: data.content || data.message,
+      content: data.content || data.message || "",
       type: data.type || "text",
       status: "sent",
-      replyTo: data.replyTo,
-      fileName: data.fileName,
+      replyTo: data.replyTo || null,
+      fileName: data.fileName || null,
+      duration: data.duration || null,
     });
     const members = await db.getGroupMembers(data.groupId);
     members.forEach((member) => {
@@ -305,6 +319,7 @@ io.on("connection", (socket) => {
               fileName: data.fileName,
               content: data.content,
               caption: data.caption,
+              duration: data.duration,
             });
             memberOnline = true;
             break;
@@ -314,7 +329,9 @@ io.on("connection", (socket) => {
           push.sendPushNotification(
             member.id,
             data.groupId,
-            `${data.fromUser.username}: ${data.message?.substring(0, 100) || "[Медиа]"}`,
+            data.type === "audio"
+              ? `${data.fromUser.username}: 🎤 Голосовое сообщение`
+              : `${data.fromUser.username}: ${data.message?.substring(0, 100) || "[Медиа]"}`,
             data.groupId,
             "group",
           );
@@ -326,6 +343,7 @@ io.on("connection", (socket) => {
       chatId: data.groupId,
       messageId: saved.id,
       status: "sent",
+      duration: data.duration,
     });
   });
 
@@ -355,11 +373,27 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     const user = onlineUsers.get(socket.id);
     if (user) {
-      io.emit("user-offline", { userId: user.id });
+      // Останавливаем индикатор печати во всех чатах
       for (let [chatId, users] of typingUsers) {
-        users.delete(user.id);
+        if (users.has(user.id)) {
+          users.delete(user.id);
+          // Отправляем typing-stop всем участникам чата
+          db.getChatMembers(chatId).then((members) => {
+            members.forEach((member) => {
+              for (let [socketId, onlineUser] of onlineUsers) {
+                if (onlineUser.id === member.id) {
+                  io.to(socketId).emit("typing-stop", {
+                    chatId,
+                    userId: user.id,
+                  });
+                }
+              }
+            });
+          });
+        }
         if (users.size === 0) typingUsers.delete(chatId);
       }
+      io.emit("user-offline", { userId: user.id });
     }
     onlineUsers.delete(socket.id);
     io.emit("online-users", Array.from(onlineUsers.values()));

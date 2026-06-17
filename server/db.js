@@ -20,10 +20,9 @@ async function initDB() {
     await pool.query(
       `CREATE TABLE IF NOT EXISTS messages (id SERIAL PRIMARY KEY, chat_id INTEGER REFERENCES chats(id) ON DELETE CASCADE, sender_id INTEGER REFERENCES users(id) ON DELETE CASCADE, content TEXT NOT NULL, type TEXT DEFAULT 'text', status TEXT DEFAULT 'sent', created_at TIMESTAMP DEFAULT NOW())`,
     );
+
+    // Добавляем колонки, если их нет
     try {
-      await pool.query(
-        `ALTER TABLE messages ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'sent'`,
-      );
       await pool.query(
         `ALTER TABLE messages ADD COLUMN IF NOT EXISTS edited BOOLEAN DEFAULT false`,
       );
@@ -33,7 +32,13 @@ async function initDB() {
       await pool.query(
         `ALTER TABLE messages ADD COLUMN IF NOT EXISTS file_name TEXT`,
       );
-    } catch (e) {}
+      await pool.query(
+        `ALTER TABLE messages ADD COLUMN IF NOT EXISTS duration REAL`,
+      );
+    } catch (e) {
+      console.log("Миграция колонок:", e.message);
+    }
+
     console.log("✅ База данных PostgreSQL готова");
   } catch (error) {
     console.error("Ошибка инициализации БД:", error);
@@ -163,15 +168,16 @@ async function getGroupMembers(chatId) {
 
 async function saveMessage(data) {
   const result = await pool.query(
-    "INSERT INTO messages (chat_id, sender_id, content, type, status, reply_to, file_name) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, created_at",
+    "INSERT INTO messages (chat_id, sender_id, content, type, status, reply_to, file_name, duration) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, created_at",
     [
       data.chatId,
       data.senderId,
-      data.content,
+      data.content || "",
       data.type || "text",
       data.status || "sent",
       data.replyTo || null,
       data.fileName || null,
+      data.duration || null,
     ],
   );
   return {
@@ -187,7 +193,7 @@ async function getChatMessages(chatId, userId, limit = 50, offset = 0) {
     [chatId, userId],
   );
   const result = await pool.query(
-    `SELECT m.id, m.content, m.type, m.status, m.edited, m.reply_to, m.file_name, m.created_at, u.id as sender_id, u.username, u.display_name FROM messages m JOIN users u ON m.sender_id = u.id WHERE m.chat_id = $1 ORDER BY m.created_at ASC LIMIT $2 OFFSET $3`,
+    `SELECT m.id, m.content, m.type, m.status, m.edited, m.reply_to, m.file_name, m.duration, m.created_at, u.id as sender_id, u.username, u.display_name FROM messages m JOIN users u ON m.sender_id = u.id WHERE m.chat_id = $1 ORDER BY m.created_at ASC LIMIT $2 OFFSET $3`,
     [chatId, limit, offset],
   );
   return result.rows;

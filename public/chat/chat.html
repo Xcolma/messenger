@@ -16,36 +16,43 @@
     <link rel="stylesheet" href="/chat/css/modals.css" />
   </head>
   <body>
+    <!-- Модалка удаления чата -->
     <div class="modal-overlay" id="delete-modal">
       <div class="modal">
         <h3>Удалить чат?</h3>
         <p>Все сообщения будут удалены</p>
         <div class="modal-actions">
           <button class="modal-btn cancel" onclick="closeDeleteModal()">
-            Отмена</button
-          ><button class="modal-btn confirm" id="confirm-delete-btn">
+            Отмена
+          </button>
+          <button class="modal-btn confirm" id="confirm-delete-btn">
             Удалить
           </button>
         </div>
       </div>
     </div>
+
+    <!-- Модалка удаления сообщения -->
     <div class="modal-overlay" id="delete-msg-modal">
       <div class="modal">
         <h3>Удалить сообщение?</h3>
         <p>Только у вас</p>
         <div class="modal-actions">
           <button class="modal-btn cancel" onclick="closeDeleteMsgModal()">
-            Отмена</button
-          ><button class="modal-btn confirm" id="confirm-delete-msg-btn">
+            Отмена
+          </button>
+          <button class="modal-btn confirm" id="confirm-delete-msg-btn">
             Удалить
           </button>
         </div>
       </div>
     </div>
+
+    <!-- Поиск пользователей -->
     <div class="search-modal" id="search-modal">
       <div class="search-modal-header">
-        <button class="icon-btn" onclick="closeSearch()">←</button
-        ><input
+        <button class="icon-btn" onclick="closeSearch()">←</button>
+        <input
           type="text"
           id="search-modal-input"
           placeholder="Поиск..."
@@ -55,6 +62,7 @@
       <div class="search-results" id="search-results"></div>
     </div>
 
+    <!-- Шапка -->
     <div class="app-header">
       <button class="icon-btn back-btn" id="back-btn" onclick="goBack()">
         ←
@@ -64,62 +72,112 @@
       <button class="icon-btn" onclick="createGroup()">👥</button>
     </div>
 
+    <!-- Основной лейаут -->
     <div class="main-layout">
+      <!-- Список чатов -->
       <div class="chats-panel" id="chats-panel">
         <div id="chats-list" class="chats-list"></div>
       </div>
+
+      <!-- Правая панель -->
       <div class="right-panel" id="right-panel">
+        <!-- Пустое состояние -->
         <div class="empty-state" id="empty-state">Выберите чат</div>
+
+        <!-- Просмотр чата -->
         <div class="chat-view" id="chat-view">
+          <!-- Заголовок чата -->
           <div class="chat-header">
             <h2 id="chat-title"></h2>
             <span
               id="typing-indicator"
               class="typing-indicator"
               style="display: none"
-            ></span
-            ><button
+            ></span>
+            <button
               class="icon-btn"
               onclick="deleteCurrentChat()"
               style="color: var(--danger)"
             >
-              🗑️</button
-            ><button class="icon-btn" onclick="closeChat()">✕</button>
+              🗑️
+            </button>
+            <button class="icon-btn" onclick="closeChat()">✕</button>
           </div>
+
+          <!-- Бар ответа -->
           <div class="reply-bar" id="reply-bar">
-            <span>↩</span><span id="reply-text"></span
-            ><span
+            <span>↩</span>
+            <span id="reply-text"></span>
+            <span
               onclick="cancelReply()"
               style="cursor: pointer; color: var(--danger)"
               >✕</span
             >
           </div>
+
+          <!-- Бар редактирования -->
           <div class="edit-bar" id="edit-bar">
-            <span>✏️</span><span id="edit-text"></span
-            ><span
+            <span>✏️</span>
+            <span id="edit-text"></span>
+            <span
               onclick="saveEdit()"
               style="cursor: pointer; color: var(--primary); font-weight: 600"
               >✓</span
-            ><span
+            >
+            <span
               onclick="cancelEdit()"
               style="cursor: pointer; color: var(--danger)"
               >✕</span
             >
           </div>
+
+          <!-- Сообщения -->
           <div class="messages" id="messages"></div>
+
+          <!-- Поле ввода -->
           <div class="input-area">
-            <div class="voice-slider-container" id="voice-slider">
-              <span class="voice-slider-cancel" onclick="cancelVoice()"
-                >Отмена</span
-              ><span class="voice-slider-text">Свайп вверх для закрепления</span
-              ><span
-                class="voice-slider-lock"
-                id="voice-lock-btn"
-                onclick="toggleVoiceLock()"
-                >🔒</span
-              >
+            <!-- Голосовой слайдер Telegram-стиль -->
+            <div class="voice-slider" id="voice-slider">
+              <div class="voice-slider-hint">
+                <span class="voice-slider-hint-left">← Свайп для отмены</span>
+                <span class="voice-slider-hint-right">Блокировка ↑</span>
+              </div>
+              <div class="voice-waves" id="voice-waves">
+                <div class="voice-wave-bar"></div>
+                <div class="voice-wave-bar"></div>
+                <div class="voice-wave-bar"></div>
+                <div class="voice-wave-bar"></div>
+                <div class="voice-wave-bar"></div>
+                <div class="voice-wave-bar"></div>
+                <div class="voice-wave-bar"></div>
+                <div class="voice-wave-bar"></div>
+                <div class="voice-wave-bar"></div>
+                <div class="voice-wave-bar"></div>
+                <div class="voice-wave-bar"></div>
+                <div class="voice-wave-bar"></div>
+                <div class="voice-wave-bar"></div>
+                <div class="voice-wave-bar"></div>
+                <div class="voice-wave-bar"></div>
+                <div class="voice-wave-bar"></div>
+                <div class="voice-wave-bar"></div>
+                <div class="voice-wave-bar"></div>
+                <div class="voice-wave-bar"></div>
+                <div class="voice-wave-bar"></div>
+              </div>
+              <div class="voice-slider-footer">
+                <span class="voice-dot"></span>
+                <span class="voice-timer" id="voice-timer">0:00</span>
+                <span id="voice-lock-icon" style="font-size: 18px">🔒</span>
+              </div>
+              <div class="voice-slider-text" id="voice-slider-text">
+                Отпустите для отправки
+              </div>
             </div>
+
+            <!-- Превью медиа -->
             <div class="media-preview" id="media-preview"></div>
+
+            <!-- Строка ввода -->
             <div class="input-row">
               <button
                 class="attach-btn"
@@ -147,9 +205,11 @@
                 id="voice-btn"
                 onmousedown="startVoice(event)"
                 onmouseup="stopVoice(event)"
+                onmouseleave="stopVoice(event)"
                 ontouchstart="startVoice(event)"
                 ontouchend="stopVoice(event)"
                 ontouchmove="moveVoice(event)"
+                ontouchcancel="cancelVoice()"
               >
                 🎤
               </button>
@@ -159,53 +219,47 @@
             </div>
           </div>
         </div>
+
+        <!-- Настройки -->
         <div class="settings-panel" id="settings-panel">
           <h2>⚙️ Настройки</h2>
           <div class="settings-section">
             <h3>Оформление</h3>
             <div class="setting-item">
-              <span>Тёмная тема</span
-              ><label class="toggle-switch"
-                ><input
+              <span>Тёмная тема</span>
+              <label class="toggle-switch">
+                <input
                   type="checkbox"
                   id="theme-toggle"
                   onchange="toggleTheme()"
-                  checked /><span class="toggle-slider"></span
-              ></label>
+                  checked
+                />
+                <span class="toggle-slider"></span>
+              </label>
             </div>
           </div>
           <div class="settings-section">
             <h3>Профиль</h3>
             <div class="setting-item">
-              <span>Имя</span
-              ><input type="text" id="displayname-input" /><button
-                class="save-btn"
-                onclick="updateDisplayName()"
-              >
-                ✓
-              </button>
+              <span>Имя</span>
+              <input type="text" id="displayname-input" />
+              <button class="save-btn" onclick="updateDisplayName()">✓</button>
             </div>
             <div class="setting-item">
-              <span>Пароль</span
-              ><input
-                type="password"
-                id="old-password"
-                placeholder="Старый"
-              /><input
-                type="password"
-                id="new-password"
-                placeholder="Новый"
-              /><button class="save-btn" onclick="updatePassword()">✓</button>
+              <span>Пароль</span>
+              <input type="password" id="old-password" placeholder="Старый" />
+              <input type="password" id="new-password" placeholder="Новый" />
+              <button class="save-btn" onclick="updatePassword()">✓</button>
             </div>
           </div>
           <div class="account-card">
             <div class="account-row">
-              <span class="account-label">Логин</span
-              ><span id="settings-username">—</span>
+              <span class="account-label">Логин</span>
+              <span id="settings-username">—</span>
             </div>
             <div class="account-row">
-              <span class="account-label">Имя</span
-              ><span id="settings-displayname">—</span>
+              <span class="account-label">Имя</span>
+              <span id="settings-displayname">—</span>
             </div>
           </div>
           <button class="danger-btn" onclick="logoutAll()">🚪 Выход</button>
@@ -216,6 +270,7 @@
       </div>
     </div>
 
+    <!-- Нижнее меню (мобилка) -->
     <div class="bottom-nav visible" id="bottom-nav">
       <div
         class="nav-item active"
@@ -229,8 +284,10 @@
       </div>
     </div>
 
+    <!-- Контейнер уведомлений -->
     <div id="notifications-container"></div>
 
+    <!-- Скрипты -->
     <script src="/socket.io/socket.io.js"></script>
     <script src="/chat/js/state.js"></script>
     <script src="/chat/js/utils.js"></script>
