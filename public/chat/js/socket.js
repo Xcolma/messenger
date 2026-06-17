@@ -10,7 +10,9 @@ socket.on("private-message", (data) => {
   } else {
     showNotification(
       data.from.username || data.from.display_name,
-      data.message || "[Медиа]",
+      data.type === "audio"
+        ? "🎤 Голосовое сообщение"
+        : data.message || "[Медиа]",
     );
   }
   loadChats();
@@ -20,14 +22,26 @@ socket.on("group-message", (data) => {
   if (currentChat?.id === data.groupId && currentTab === "chats") {
     loadMessages(currentChat.id);
   } else {
-    showNotification(data.from.username, data.message || "[Медиа]");
+    showNotification(
+      data.from.username,
+      data.type === "audio"
+        ? "🎤 Голосовое сообщение"
+        : data.message || "[Медиа]",
+    );
   }
   loadChats();
 });
 
 socket.on("edit-message", (data) => {
-  if (currentChat && currentChat.id === data.chatId)
+  if (currentChat && currentChat.id === data.chatId) {
     loadMessages(currentChat.id);
+  }
+});
+
+socket.on("message-sent", (data) => {
+  if (currentChat && currentChat.id === data.chatId) {
+    loadMessages(currentChat.id);
+  }
 });
 
 socket.on("online-users", (users) => {
@@ -37,8 +51,9 @@ socket.on("online-users", (users) => {
 
 socket.on("typing-start", (data) => {
   if (currentChat?.id === data.chatId && data.userId !== currentUser.id) {
-    if (!typingUsers[data.userId])
+    if (!typingUsers[data.userId]) {
       typingUsers[data.userId] = { username: data.username, timer: null };
+    }
     clearTimeout(typingUsers[data.userId].timer);
     typingUsers[data.userId].timer = setTimeout(() => {
       delete typingUsers[data.userId];
@@ -49,7 +64,7 @@ socket.on("typing-start", (data) => {
 });
 
 socket.on("typing-stop", (data) => {
-  if (currentChat?.id === data.chatId && typingUsers[data.userId]) {
+  if (typingUsers[data.userId]) {
     clearTimeout(typingUsers[data.userId].timer);
     delete typingUsers[data.userId];
     updateTypingIndicator();
@@ -64,4 +79,13 @@ socket.on("user-offline", (data) => {
   }
   onlineUserIds.delete(data.userId);
   renderChats();
+});
+
+// Переподключение
+socket.on("connect", () => {
+  socket.emit("user-login", {
+    id: currentUser.id,
+    username: currentUser.username,
+  });
+  loadChats();
 });

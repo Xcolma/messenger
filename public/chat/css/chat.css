@@ -4,6 +4,7 @@
   --surface: #131313;
   --surface2: #1a1a1a;
   --primary: #8b5cf6;
+  --primary-glow: rgba(139, 92, 246, 0.3);
   --secondary: #a78bfa;
   --text: #ffffff;
   --text2: #a0a0a0;
@@ -21,6 +22,7 @@
   --surface: #fff;
   --surface2: #f8faff;
   --primary: #3b82f6;
+  --primary-glow: rgba(59, 130, 246, 0.2);
   --secondary: #60a5fa;
   --text: #1e293b;
   --text2: #64748b;
@@ -32,7 +34,6 @@
   --online: #22c55e;
 }
 
-/* ========== СБРОС ========== */
 * {
   margin: 0;
   padding: 0;
@@ -46,8 +47,13 @@ body {
   height: 100dvh;
   display: flex;
   flex-direction: column;
-  transition: all 0.5s ease;
+  transition:
+    background 0.3s,
+    color 0.3s;
   overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 /* ========== ШАПКА ========== */
@@ -86,6 +92,14 @@ body {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.icon-btn:hover {
+  background: var(--border);
+}
+.icon-btn:active {
+  transform: scale(0.9);
 }
 
 .back-btn {
@@ -114,13 +128,12 @@ body {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 0 8px;
+  padding: 4px 8px;
 }
 
 .chats-list::-webkit-scrollbar {
   width: 3px;
 }
-
 .chats-list::-webkit-scrollbar-thumb {
   background: var(--primary);
   border-radius: 3px;
@@ -130,7 +143,7 @@ body {
 .chat-item {
   padding: 10px 12px;
   margin-bottom: 2px;
-  border-radius: 10px;
+  border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
@@ -140,6 +153,9 @@ body {
 
 .chat-item:hover {
   background: var(--surface2);
+}
+.chat-item:active {
+  transform: scale(0.98);
 }
 
 .chat-item.active {
@@ -152,8 +168,8 @@ body {
 }
 
 .chat-avatar {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: var(--gradient);
   display: flex;
@@ -184,7 +200,7 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-top: 1px;
+  margin-top: 2px;
 }
 
 .unread-badge {
@@ -192,9 +208,19 @@ body {
   color: white;
   font-size: 10px;
   font-weight: 700;
-  padding: 2px 7px;
+  padding: 3px 8px;
   border-radius: 10px;
   flex-shrink: 0;
+  animation: badgePop 0.3s ease;
+}
+
+@keyframes badgePop {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
 }
 
 .online-dot {
@@ -203,6 +229,7 @@ body {
   border-radius: 50%;
   background: var(--online);
   flex-shrink: 0;
+  box-shadow: 0 0 6px var(--online);
 }
 
 /* ========== ПРАВАЯ ПАНЕЛЬ ========== */
@@ -220,8 +247,10 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.4;
+  opacity: 0.3;
   font-size: 16px;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .chat-view {
@@ -258,6 +287,17 @@ body {
   color: var(--primary);
   font-style: italic;
   flex-shrink: 0;
+  animation: typingDots 1.5s infinite;
+}
+
+@keyframes typingDots {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
 }
 
 /* ========== СООБЩЕНИЯ ========== */
@@ -268,13 +308,13 @@ body {
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
+  scroll-behavior: smooth;
 }
 
 .messages::-webkit-scrollbar {
   width: 3px;
 }
-
 .messages::-webkit-scrollbar-thumb {
   background: var(--primary);
   border-radius: 3px;
@@ -282,18 +322,19 @@ body {
 
 .message {
   max-width: 78%;
-  border-radius: 12px;
-  animation: msgIn 0.2s ease;
+  border-radius: 14px;
+  animation: msgIn 0.25s ease;
   position: relative;
   font-size: 14px;
   word-wrap: break-word;
-  overflow: hidden;
+  overflow: visible;
+  line-height: 1.4;
 }
 
 @keyframes msgIn {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -305,13 +346,13 @@ body {
   background: var(--msg-sent);
   color: white;
   align-self: flex-end;
-  border-bottom-right-radius: 3px;
+  border-bottom-right-radius: 4px;
 }
 
 .message.received {
   background: var(--msg-received);
   align-self: flex-start;
-  border-bottom-left-radius: 3px;
+  border-bottom-left-radius: 4px;
 }
 
 .light-theme .message.received {
@@ -319,7 +360,7 @@ body {
 }
 
 .message-inner {
-  padding: 7px 10px;
+  padding: 8px 10px;
   overflow: hidden;
 }
 
@@ -328,26 +369,32 @@ body {
   opacity: 0.7;
   border-left: 2px solid rgba(255, 255, 255, 0.4);
   padding-left: 6px;
-  margin-bottom: 2px;
+  margin-bottom: 3px;
   cursor: pointer;
+  border-radius: 2px;
 }
 
 .message .msg-sender {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
-  margin-bottom: 1px;
+  margin-bottom: 2px;
   opacity: 0.8;
+  color: var(--primary);
+}
+
+.message.sent .msg-sender {
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .message .msg-media-wrapper {
-  margin: -7px -10px 0 -10px;
+  margin: -8px -10px 0 -10px;
   overflow: hidden;
+  border-radius: 14px 14px 4px 4px;
 }
 
 .message .msg-media {
   width: 100%;
   max-width: 300px;
-  border-radius: 12px 12px 3px 3px;
   display: block;
   cursor: pointer;
 }
@@ -361,42 +408,66 @@ body {
 .message .msg-file {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   background: rgba(0, 0, 0, 0.2);
-  padding: 5px 8px;
-  border-radius: 6px;
-  font-size: 11px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
   margin: 2px 0;
   overflow: hidden;
+}
+
+.message .msg-file a {
+  color: white;
+  text-decoration: underline;
+}
+
+.message.received .msg-file a {
+  color: var(--primary);
 }
 
 .message .msg-time-status {
   display: flex;
   justify-content: flex-end;
-  gap: 3px;
-  margin-top: 2px;
-  font-size: 9px;
+  align-items: center;
+  gap: 4px;
+  margin-top: 3px;
+  font-size: 10px;
   opacity: 0.7;
 }
 
 .message .edited-tag {
-  font-size: 9px;
+  font-size: 10px;
   opacity: 0.5;
+  font-style: italic;
 }
 
+/* Кнопки действий */
 .message .msg-actions-overlay {
   display: none;
   position: absolute;
-  top: -30px;
+  top: -36px;
   right: 0;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 4px;
   gap: 2px;
   z-index: 10;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   white-space: nowrap;
+  animation: actionsIn 0.2s ease;
+}
+
+@keyframes actionsIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .message.selected .msg-actions-overlay {
@@ -408,31 +479,45 @@ body {
   border: none;
   color: var(--text);
   cursor: pointer;
-  font-size: 14px;
-  padding: 6px 8px;
-  border-radius: 6px;
+  font-size: 15px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  transition: all 0.2s;
+  min-width: 36px;
 }
 
 .msg-action-btn:hover {
   background: var(--primary);
   color: white;
 }
-
 .msg-action-btn.danger:hover {
   background: var(--danger);
+  color: white;
 }
 
 /* ========== БАРЫ ОТВЕТА И РЕДАКТИРОВАНИЯ ========== */
 .reply-bar,
 .edit-bar {
   display: none;
-  padding: 6px 10px;
+  padding: 8px 12px;
   background: var(--surface2);
   border-top: 1px solid var(--border);
-  font-size: 11px;
+  font-size: 12px;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   flex-shrink: 0;
+  animation: barIn 0.2s ease;
+}
+
+@keyframes barIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .reply-bar.active,
@@ -459,7 +544,7 @@ body {
 
 .media-preview {
   display: none;
-  padding: 0 10px 6px 10px;
+  padding: 0 10px 8px 10px;
   overflow-x: auto;
   gap: 8px;
 }
@@ -471,8 +556,8 @@ body {
 
 .media-preview img,
 .media-preview video {
-  width: 60px;
-  height: 60px;
+  width: 56px;
+  height: 56px;
   border-radius: 8px;
   object-fit: cover;
   flex-shrink: 0;
@@ -503,14 +588,14 @@ body {
 .input-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .attach-btn {
   background: var(--input-bg);
   color: var(--text);
-  width: 34px;
-  height: 34px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   cursor: pointer;
   font-size: 18px;
@@ -519,18 +604,24 @@ body {
   justify-content: center;
   flex-shrink: 0;
   border: none;
+  transition: all 0.2s;
+}
+
+.attach-btn:active {
+  transform: scale(0.9);
 }
 
 .msg-input {
   flex: 1;
-  padding: 9px 12px;
+  padding: 10px 14px;
   background: var(--input-bg);
   border: 2px solid var(--border);
-  border-radius: 18px;
+  border-radius: 20px;
   color: var(--text);
-  font-size: 13px;
+  font-size: 14px;
   outline: none;
   min-width: 0;
+  transition: border-color 0.2s;
 }
 
 .msg-input:focus {
@@ -544,12 +635,12 @@ body {
 /* ========== УВЕДОМЛЕНИЯ ========== */
 #notifications-container {
   position: fixed;
-  top: 10px;
-  right: 10px;
+  top: 12px;
+  right: 12px;
   z-index: 9999;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   pointer-events: none;
 }
 
@@ -558,12 +649,14 @@ body {
   background: var(--surface);
   border: 1px solid var(--border);
   color: var(--text);
-  padding: 8px 12px;
-  border-radius: 8px;
-  min-width: 200px;
-  animation: slideIn 0.3s;
+  padding: 10px 14px;
+  border-radius: 10px;
+  min-width: 220px;
+  max-width: 320px;
+  animation: slideIn 0.3s ease;
   border-left: 3px solid var(--primary);
   font-size: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
 @keyframes slideIn {
@@ -577,7 +670,7 @@ body {
   }
 }
 
-/* ========== VOICE SLIDER (Telegram-style) ========== */
+/* ========== VOICE SLIDER ========== */
 .voice-slider {
   display: none;
   position: absolute;
@@ -642,16 +735,10 @@ body {
   color: var(--danger);
 }
 
-.voice-slider-hint-left {
-  opacity: 0.8;
-}
-
+.voice-slider-hint-left,
 .voice-slider-hint-right {
   opacity: 0.8;
-  cursor: pointer;
-  transition: all 0.2s;
 }
-
 .voice-slider.locked .voice-slider-hint-right {
   color: var(--primary);
   font-weight: 600;
@@ -678,10 +765,6 @@ body {
 
 .voice-slider.cancelling .voice-wave-bar {
   background: var(--danger);
-}
-
-.voice-slider.locked .voice-wave-bar {
-  background: var(--primary);
 }
 
 .voice-slider-footer {
@@ -732,7 +815,6 @@ body {
   color: var(--danger);
   font-weight: 600;
 }
-
 .voice-slider.locked .voice-slider-text {
   color: var(--primary);
 }
@@ -796,7 +878,7 @@ body {
   color: white;
   border: none;
   padding: 8px 16px;
-  border-radius: 18px;
+  border-radius: 20px;
   cursor: pointer;
   font-weight: 600;
   font-size: 13px;
@@ -821,28 +903,28 @@ body {
   }
 }
 
-/* ========== AUDIO MESSAGE (Telegram-style) ========== */
+/* ========== AUDIO MESSAGE ========== */
 .msg-audio-telegram {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 12px;
+  padding: 6px 10px;
   cursor: pointer;
   user-select: none;
-  min-width: 200px;
-  max-width: 300px;
+  min-width: 180px;
+  max-width: 280px;
 }
 
 .audio-play-btn {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   background: var(--primary);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 13px;
   flex-shrink: 0;
   transition: all 0.2s;
 }
@@ -850,14 +932,13 @@ body {
 .message.sent .audio-play-btn {
   background: rgba(255, 255, 255, 0.3);
 }
-
 .audio-play-btn:active {
   transform: scale(0.9);
 }
 
 .audio-wave-container {
   flex: 1;
-  height: 36px;
+  height: 34px;
   display: flex;
   align-items: center;
   min-width: 0;
@@ -875,7 +956,6 @@ body {
 .message.received .audio-wave-track {
   background: rgba(0, 0, 0, 0.1);
 }
-
 .light-theme .message.received .audio-wave-track {
   background: rgba(0, 0, 0, 0.15);
 }
@@ -896,9 +976,9 @@ body {
 }
 
 .audio-duration {
-  font-size: 12px;
+  font-size: 11px;
   color: rgba(255, 255, 255, 0.7);
-  min-width: 35px;
+  min-width: 32px;
   text-align: right;
   flex-shrink: 0;
   font-variant-numeric: tabular-nums;
@@ -910,7 +990,16 @@ body {
 
 /* ========== МОБИЛЬНАЯ ВЁРСТКА ========== */
 @media (max-width: 768px) {
+  .app-header {
+    padding: 8px 10px;
+    min-height: 44px;
+  }
+  .app-header h3 {
+    font-size: 15px;
+  }
+
   .chats-panel {
+    width: 100%;
     max-width: 100%;
     border-right: none;
   }
@@ -926,27 +1015,51 @@ body {
   .back-btn.show {
     display: flex;
   }
-  .app-header h3 {
-    font-size: 14px;
-  }
+
   .chat-item {
     padding: 8px 10px;
   }
   .chat-avatar {
-    width: 36px;
-    height: 36px;
-    font-size: 14px;
+    width: 40px;
+    height: 40px;
+    font-size: 15px;
   }
+  .chat-name {
+    font-size: 13px;
+  }
+
   .message {
     max-width: 85%;
+    font-size: 13px;
   }
+  .message-inner {
+    padding: 7px 9px;
+  }
+
   .msg-input {
-    font-size: 12px;
-    padding: 7px 10px;
+    font-size: 13px;
+    padding: 8px 12px;
   }
   .voice-slider {
     min-width: auto;
     width: 95%;
+    padding: 12px 16px;
+  }
+
+  .msg-actions-overlay {
+    top: auto;
+    bottom: 100%;
+    margin-bottom: 4px;
+  }
+  .msg-action-btn {
+    font-size: 14px;
+    padding: 10px 12px;
+    min-width: 40px;
+  }
+
+  .notification-toast {
+    max-width: 280px;
+    font-size: 11px;
   }
 }
 

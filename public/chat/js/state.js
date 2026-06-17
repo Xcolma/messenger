@@ -20,12 +20,27 @@ let voiceLocked = false;
 let recording = false;
 let voiceStartY = 0;
 let pendingMedia = [];
+let audioContext = null;
+let analyser = null;
+let animationFrame = null;
+let voiceTimer = null;
+let voiceSeconds = 0;
 
 const savedTheme = localStorage.getItem("theme");
 if (savedTheme === "light") {
   document.body.classList.add("light-theme");
-  document.getElementById("theme-toggle").checked = false;
 }
+
+// Применяем тему после загрузки DOM
+document.addEventListener("DOMContentLoaded", () => {
+  const themeToggle = document.getElementById("theme-toggle");
+  if (themeToggle) {
+    themeToggle.checked = savedTheme !== "light";
+  }
+  // Загружаем чаты при старте
+  loadChats();
+  subscribeToPush();
+});
 
 function toggleTheme() {
   document.body.classList.toggle("light-theme");
@@ -37,14 +52,16 @@ function toggleTheme() {
 
 function updateUIVisibility() {
   const bn = document.getElementById("bottom-nav");
-  bn.classList.toggle(
-    "visible",
-    (currentTab === "chats" && !currentChat) || currentTab === "settings",
-  );
+  if (!bn) return;
+
+  const showNav =
+    (currentTab === "chats" && !currentChat) || currentTab === "settings";
+  bn.classList.toggle("visible", showNav);
 }
 
 function switchTab(tab) {
   currentTab = tab;
+
   document
     .querySelectorAll(".nav-item")
     .forEach((e) => e.classList.remove("active"));
@@ -54,6 +71,8 @@ function switchTab(tab) {
   const es = document.getElementById("empty-state");
   const cv = document.getElementById("chat-view");
   const sp = document.getElementById("settings-panel");
+
+  if (!es || !cv || !sp) return;
 
   sp.classList.remove("active");
 
@@ -75,10 +94,18 @@ function switchTab(tab) {
     document.getElementById("header-title").textContent = "⚙️ Настройки";
     loadSettings();
   }
+
   updateUIVisibility();
 
   if (window.innerWidth < 769) {
-    document.getElementById("right-panel").classList.add("show");
-    document.getElementById("chats-panel").classList.add("hide");
+    const rp = document.getElementById("right-panel");
+    const cp = document.getElementById("chats-panel");
+    if (rp) rp.classList.add("show");
+    if (cp) cp.classList.add("hide");
+  }
+
+  // Важно: рендерим чаты при переключении на вкладку чатов
+  if (tab === "chats") {
+    renderChats();
   }
 }

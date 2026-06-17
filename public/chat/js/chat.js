@@ -8,25 +8,34 @@ async function loadChats() {
       chats = data.chats;
       renderChats();
     }
-  } catch (e) {}
+  } catch (e) {
+    console.error("Ошибка загрузки чатов:", e);
+  }
 }
 
 function renderChats() {
-  document.getElementById("chats-list").innerHTML = chats
-    .map((chat) => {
-      const other = chat.members?.find((m) => m.id !== currentUser.id);
-      const online = other && onlineUserIds.has(other.id);
-      return `<div class="chat-item ${currentChat?.id === chat.id ? "active" : ""}" onclick="openChatById(${chat.id})">
-      <div class="chat-avatar">${getChatName(chat).charAt(0)}</div>
-      <div class="chat-info">
-        <div class="chat-name">${getChatName(chat)}</div>
-        <div class="chat-last">${chat.last_message || "Нет сообщений"}</div>
-      </div>
-      ${chat.unread_count > 0 ? `<span class="unread-badge">${chat.unread_count}</span>` : ""}
-      ${online ? '<span class="online-dot"></span>' : ""}
-    </div>`;
-    })
-    .join("");
+  const list = document.getElementById("chats-list");
+  if (!list) return;
+
+  list.innerHTML =
+    chats.length === 0
+      ? '<div style="text-align:center;color:var(--text2);padding:20px;">Нет чатов</div>'
+      : chats
+          .map((chat) => {
+            const other = chat.members?.find((m) => m.id !== currentUser.id);
+            const online = other && onlineUserIds.has(other.id);
+            const lastMsg = chat.last_message || "Нет сообщений";
+            return `<div class="chat-item ${currentChat?.id === chat.id ? "active" : ""}" onclick="openChatById(${chat.id})">
+          <div class="chat-avatar">${getChatName(chat).charAt(0)}</div>
+          <div class="chat-info">
+            <div class="chat-name">${getChatName(chat)}</div>
+            <div class="chat-last">${lastMsg.length > 30 ? lastMsg.substring(0, 30) + "..." : lastMsg}</div>
+          </div>
+          ${chat.unread_count > 0 ? `<span class="unread-badge">${chat.unread_count}</span>` : ""}
+          ${online ? '<span class="online-dot"></span>' : ""}
+        </div>`;
+          })
+          .join("");
 }
 
 function openChatById(id) {
@@ -94,12 +103,16 @@ async function createGroup() {
       await loadChats();
       openChatById(data.chat.id);
     }
-  } catch (e) {}
+  } catch (e) {
+    console.error("Ошибка создания группы:", e);
+  }
 }
 
 function openSearch() {
   document.getElementById("search-modal").classList.add("active");
-  document.getElementById("search-modal-input").focus();
+  setTimeout(() => {
+    document.getElementById("search-modal-input").focus();
+  }, 100);
 }
 
 function closeSearch() {
@@ -116,28 +129,33 @@ async function searchUsersModal() {
   }
   try {
     const res = await fetch(
-      `/api/auth/search?q=${q}&userId=${currentUser.id}`,
+      `/api/auth/search?q=${encodeURIComponent(q)}&userId=${currentUser.id}`,
       {
         headers: { Authorization: `Bearer ${token}` },
       },
     );
     const data = await res.json();
     if (data.success) {
-      document.getElementById("search-results").innerHTML = data.users
-        .map(
-          (u) => `
-        <div class="search-result-item" onclick="startPrivateChat('${u.username}');closeSearch();">
-          <div class="chat-avatar">${(u.display_name || u.username).charAt(0)}</div>
-          <div>
-            <div style="font-weight:600">${u.display_name || u.username}</div>
-            <div style="font-size:12px;color:var(--text2)">@${u.username}</div>
+      document.getElementById("search-results").innerHTML =
+        data.users.length === 0
+          ? '<div style="text-align:center;color:var(--text2);padding:20px;">Никого не найдено</div>'
+          : data.users
+              .map(
+                (u) => `
+          <div class="search-result-item" onclick="startPrivateChat('${u.username}');closeSearch();">
+            <div class="chat-avatar">${(u.display_name || u.username).charAt(0)}</div>
+            <div>
+              <div style="font-weight:600">${u.display_name || u.username}</div>
+              <div style="font-size:12px;color:var(--text2)">@${u.username}</div>
+            </div>
           </div>
-        </div>
-      `,
-        )
-        .join("");
+        `,
+              )
+              .join("");
     }
-  } catch (e) {}
+  } catch (e) {
+    console.error("Ошибка поиска:", e);
+  }
 }
 
 async function startPrivateChat(username) {
@@ -154,8 +172,12 @@ async function startPrivateChat(username) {
     if (data.success) {
       await loadChats();
       openChatById(data.chat.id);
+    } else {
+      alert(data.message || "Ошибка создания чата");
     }
-  } catch (e) {}
+  } catch (e) {
+    console.error("Ошибка создания чата:", e);
+  }
 }
 
 function deleteCurrentChat() {
@@ -170,6 +192,7 @@ function confirmDeleteChat(id) {
 
 function closeDeleteModal() {
   document.getElementById("delete-modal").classList.remove("active");
+  chatToDelete = null;
 }
 
 async function deleteChat() {
@@ -181,6 +204,8 @@ async function deleteChat() {
     });
     if (currentChat?.id === chatToDelete) goBack();
     await loadChats();
-  } catch (e) {}
+  } catch (e) {
+    console.error("Ошибка удаления чата:", e);
+  }
   closeDeleteModal();
 }

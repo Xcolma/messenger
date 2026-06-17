@@ -1,25 +1,15 @@
 // ========== VOICE RECORDER (Telegram-style) ==========
-let mediaRecorder = null;
-let audioChunks = [];
-let voiceLocked = false;
-let recording = false;
-let voiceStartY = 0;
-let voiceTimer = null;
-let voiceSeconds = 0;
-
-// Анализатор громкости
-let audioContext = null;
-let analyser = null;
-let animationFrame = null;
 
 // Пороги для жестов
-const CANCEL_THRESHOLD = 100; // пикселей влево для отмены
+const CANCEL_THRESHOLD = 80; // пикселей влево для отмены
 const LOCK_THRESHOLD = 80; // пикселей вверх для блокировки
 
 async function startVoice(e) {
   if (!currentChat || recording) return;
 
   e.preventDefault();
+  e.stopPropagation();
+
   const touch = e.touches ? e.touches[0] : null;
   voiceStartY = touch ? touch.clientY : 0;
 
@@ -33,32 +23,49 @@ async function startVoice(e) {
     analyser.fftSize = 256;
     source.connect(analyser);
 
-    mediaRecorder = new MediaRecorder(stream, {
-      mimeType: "audio/webm;codecs=opus",
-    });
+    // Проверяем поддержку кодеков
+    let mimeType = "audio/webm";
+    if (!MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
+      if (MediaRecorder.isTypeSupported("audio/webm")) {
+        mimeType = "audio/webm";
+      } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
+        mimeType = "audio/mp4";
+      }
+    } else {
+      mimeType = "audio/webm;codecs=opus";
+    }
+
+    mediaRecorder = new MediaRecorder(stream, { mimeType });
     audioChunks = [];
     voiceLocked = false;
     voiceSeconds = 0;
 
-    mediaRecorder.ondataavailable = (ev) => audioChunks.push(ev.data);
+    mediaRecorder.ondataavailable = (ev) => {
+      if (ev.data.size > 0) audioChunks.push(ev.data);
+    };
 
     mediaRecorder.onstop = () => {
       cancelAnimationFrame(animationFrame);
-      if (audioContext) audioContext.close();
+      if (audioContext) {
+        audioContext.close();
+        audioContext = null;
+      }
+      analyser = null;
 
       const totalSeconds = voiceSeconds;
 
       // Если слишком короткая запись — отменяем
-      if (totalSeconds < 0.5) {
-        showNotification("⚠️", "Слишком короткое сообщение");
+      if (totalSeconds < 0.5 || audioChunks.length === 0) {
         stream.getTracks().forEach((t) => t.stop());
+        resetVoiceUI();
+        showNotification("⚠️", "Слишком короткое сообщение");
         return;
       }
 
-      const blob = new Blob(audioChunks, { type: "audio/webm" });
+      const blob = new Blob(audioChunks, { type: mimeType });
       const reader = new FileReader();
       reader.onload = function () {
-        if (currentChat) {
+        if (currentChat && reader.result) {
           const msgData = {
             chatId: currentChat.id,
             fromUser: currentUser,
@@ -71,14 +78,20 @@ async function startVoice(e) {
             const toUser = currentChat.members.find(
               (m) => m.id !== currentUser.id,
             );
-            socket.emit("private-message", { ...msgData, toUserId: toUser.id });
+            if (toUser)
+              socket.emit("private-message", {
+                ...msgData,
+                toUserId: toUser.id,
+              });
           } else {
             socket.emit("group-message", {
               ...msgData,
               groupId: currentChat.id,
             });
           }
-          setTimeout(() => loadMessages(currentChat.id), 300);
+          setTimeout(() => {
+            if (currentChat) loadMessages(currentChat.id);
+          }, 300);
         }
       };
       reader.readAsDataURL(blob);
@@ -86,15 +99,24 @@ async function startVoice(e) {
     };
 
     // Запуск записи
-    mediaRecorder.start(100); // чанки каждые 100мс
+    mediaRecorder.start(100);
     recording = true;
 
     // UI
-    document.getElementById("voice-btn").classList.add("recording");
-    document.getElementById("voice-slider").classList.add("active");
-    document
-      .getElementById("voice-slider")
-      .classList.remove("cancelling", "locked");
+    const voiceBtn = document.getElementById("voice-btn");
+    const voiceSlider = document.getElementById("voice-slider");
+
+    if (voiceBtn) voiceBtn.classList.add("recording");
+    if (voiceSlider) {
+      voiceSlider.classList.add("active");
+      voiceSlider.classList.remove("cancelling", "locked");
+    }
+
+    const lockIcon = document.getElementById("voice-lock-icon");
+    if (lockIcon) lockIcon.textContent = "🔒";
+
+    const sliderText = document.getElementById("voice-slider-text");
+    if (sliderText) sliderText.textContent = "Отпустите для отправки";
 
     // Запуск визуализации
     visualizeVolume();
@@ -102,12 +124,15 @@ async function startVoice(e) {
     // Таймер
     voiceSeconds = 0;
     updateVoiceTimer();
+    clearInterval(voiceTimer);
     voiceTimer = setInterval(() => {
       voiceSeconds++;
       updateVoiceTimer();
     }, 1000);
   } catch (err) {
+    console.error("Ошибка микрофона:", err);
     showNotification("❌", "Нет доступа к микрофону");
+    resetVoiceUI();
   }
 }
 
@@ -116,13 +141,17 @@ function visualizeVolume() {
   if (!analyser) return;
 
   const bars = document.querySelectorAll(".voice-wave-bar");
+  if (bars.length === 0) return;
+
   const dataArray = new Uint8Array(analyser.frequencyBinCount);
 
   function draw() {
+    if (!analyser) return;
     analyser.getByteFrequencyData(dataArray);
 
     bars.forEach((bar, i) => {
-      const value = dataArray[i * 4] || 0;
+      const index = Math.floor(i * (dataArray.length / bars.length));
+      const value = dataArray[index] || 0;
       const height = Math.max(3, (value / 255) * 100);
       bar.style.height = height + "%";
     });
@@ -151,11 +180,15 @@ function moveVoice(e) {
   const deltaX = touch.clientX - window.innerWidth / 2;
 
   const slider = document.getElementById("voice-slider");
+  if (!slider) return;
+
+  const sliderText = document.getElementById("voice-slider-text");
 
   // Свайп влево — отмена
   if (deltaX < -CANCEL_THRESHOLD && !voiceLocked) {
     slider.classList.add("cancelling");
     slider.classList.remove("locked");
+    if (sliderText) sliderText.textContent = "Отпустите для отмены";
   }
   // Свайп вверх — блокировка
   else if (deltaY > LOCK_THRESHOLD && !voiceLocked) {
@@ -164,23 +197,33 @@ function moveVoice(e) {
   // Возврат
   else if (!voiceLocked) {
     slider.classList.remove("cancelling");
+    if (sliderText) sliderText.textContent = "Отпустите для отправки";
   }
 }
 
 function lockVoice() {
   voiceLocked = true;
   const slider = document.getElementById("voice-slider");
-  slider.classList.add("locked");
-  slider.classList.remove("cancelling");
-  document.getElementById("voice-lock-icon").textContent = "🔓";
-  showNotification("🔒", "Запись закреплена. Нажмите чтобы остановить");
+  if (slider) {
+    slider.classList.add("locked");
+    slider.classList.remove("cancelling");
+  }
+  const lockIcon = document.getElementById("voice-lock-icon");
+  if (lockIcon) lockIcon.textContent = "🔓";
+  const sliderText = document.getElementById("voice-slider-text");
+  if (sliderText) sliderText.textContent = "Нажмите кнопку для отправки";
+  showNotification("🔒", "Запись закреплена");
 }
 
 function toggleVoiceLock() {
   if (voiceLocked) {
     voiceLocked = false;
-    document.getElementById("voice-slider").classList.remove("locked");
-    document.getElementById("voice-lock-icon").textContent = "🔒";
+    const slider = document.getElementById("voice-slider");
+    if (slider) slider.classList.remove("locked");
+    const lockIcon = document.getElementById("voice-lock-icon");
+    if (lockIcon) lockIcon.textContent = "🔒";
+    const sliderText = document.getElementById("voice-slider-text");
+    if (sliderText) sliderText.textContent = "Отпустите для отправки";
   }
 }
 
@@ -190,7 +233,7 @@ function stopVoice(e) {
   const slider = document.getElementById("voice-slider");
 
   // Если свайпнули влево — отмена
-  if (slider.classList.contains("cancelling")) {
+  if (slider && slider.classList.contains("cancelling")) {
     cancelVoice();
     return;
   }
@@ -208,38 +251,56 @@ function finishRecording() {
   recording = false;
   voiceLocked = false;
   clearInterval(voiceTimer);
-
-  document.getElementById("voice-btn").classList.remove("recording");
-  document
-    .getElementById("voice-slider")
-    .classList.remove("active", "cancelling", "locked");
-  document.getElementById("voice-lock-icon").textContent = "🔒";
+  resetVoiceUI();
 }
 
 function cancelVoice() {
   if (mediaRecorder && mediaRecorder.state === "recording") {
-    audioChunks = []; // очищаем чанки
+    audioChunks = [];
     mediaRecorder.stop();
   }
   recording = false;
   voiceLocked = false;
   clearInterval(voiceTimer);
-  if (audioContext) audioContext.close();
-
-  document.getElementById("voice-btn").classList.remove("recording");
-  document
-    .getElementById("voice-slider")
-    .classList.remove("active", "cancelling", "locked");
-  document.getElementById("voice-lock-icon").textContent = "🔒";
+  if (audioContext) {
+    audioContext.close();
+    audioContext = null;
+  }
+  analyser = null;
+  resetVoiceUI();
 
   showNotification("🗑️", "Запись отменена");
 }
 
-// Клик по кнопке когда запись заблокирована
-document.getElementById("voice-btn").addEventListener("click", function (e) {
-  if (voiceLocked && recording) {
-    e.preventDefault();
-    e.stopPropagation();
-    finishRecording();
-  }
-});
+function resetVoiceUI() {
+  const voiceBtn = document.getElementById("voice-btn");
+  const voiceSlider = document.getElementById("voice-slider");
+  const lockIcon = document.getElementById("voice-lock-icon");
+
+  if (voiceBtn) voiceBtn.classList.remove("recording");
+  if (voiceSlider)
+    voiceSlider.classList.remove("active", "cancelling", "locked");
+  if (lockIcon) lockIcon.textContent = "🔒";
+}
+
+// Инициализация кнопки голосовых
+function initVoiceButton() {
+  const voiceBtn = document.getElementById("voice-btn");
+  if (!voiceBtn) return;
+
+  // Удаляем старые обработчики
+  const newBtn = voiceBtn.cloneNode(true);
+  voiceBtn.parentNode.replaceChild(newBtn, voiceBtn);
+
+  // Добавляем обработчик клика (для завершения заблокированной записи)
+  newBtn.addEventListener("click", function (e) {
+    if (voiceLocked && recording) {
+      e.preventDefault();
+      e.stopPropagation();
+      finishRecording();
+    }
+  });
+}
+
+// Запускаем инициализацию после загрузки DOM
+document.addEventListener("DOMContentLoaded", initVoiceButton);
