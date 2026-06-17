@@ -31,13 +31,11 @@ if (savedTheme === "light") {
   document.body.classList.add("light-theme");
 }
 
-// Применяем тему после загрузки DOM
 document.addEventListener("DOMContentLoaded", () => {
   const themeToggle = document.getElementById("theme-toggle");
   if (themeToggle) {
     themeToggle.checked = savedTheme !== "light";
   }
-  // Загружаем чаты при старте
   loadChats();
   subscribeToPush();
 });
@@ -77,35 +75,36 @@ function switchTab(tab) {
   sp.classList.remove("active");
 
   if (tab === "chats") {
-    if (currentChat) {
-      es.style.display = "none";
-      cv.classList.add("active");
-    } else {
-      es.style.display = "flex";
-      cv.classList.remove("active");
+    // Сбрасываем currentChat при переходе в список чатов
+    currentChat = null;
+
+    es.style.display = "flex";
+    cv.classList.remove("active");
+
+    document.getElementById("header-title").textContent = "💬 Мессенджер";
+
+    // На мобилке показываем список чатов
+    if (window.innerWidth < 769) {
+      document.getElementById("chats-panel").classList.remove("hide");
+      document.getElementById("right-panel").classList.remove("show");
+      document.getElementById("back-btn").classList.remove("show");
     }
-    document.getElementById("header-title").textContent = currentChat
-      ? getChatName(currentChat)
-      : "💬 Мессенджер";
+
+    renderChats();
   } else {
+    // Настройки
     cv.classList.remove("active");
     es.style.display = "none";
     sp.classList.add("active");
     document.getElementById("header-title").textContent = "⚙️ Настройки";
     loadSettings();
+
+    // На мобилке показываем правую панель
+    if (window.innerWidth < 769) {
+      document.getElementById("chats-panel").classList.add("hide");
+      document.getElementById("right-panel").classList.add("show");
+    }
   }
 
   updateUIVisibility();
-
-  if (window.innerWidth < 769) {
-    const rp = document.getElementById("right-panel");
-    const cp = document.getElementById("chats-panel");
-    if (rp) rp.classList.add("show");
-    if (cp) cp.classList.add("hide");
-  }
-
-  // Важно: рендерим чаты при переключении на вкладку чатов
-  if (tab === "chats") {
-    renderChats();
-  }
 }

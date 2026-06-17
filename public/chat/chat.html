@@ -136,7 +136,7 @@
 
           <!-- Поле ввода -->
           <div class="input-area">
-            <!-- Голосовой слайдер Telegram-стиль -->
+            <!-- Голосовой слайдер -->
             <div class="voice-slider" id="voice-slider">
               <div class="voice-slider-hint">
                 <span class="voice-slider-hint-left">← Свайп для отмены</span>
@@ -179,12 +179,7 @@
 
             <!-- Строка ввода -->
             <div class="input-row">
-              <button
-                class="attach-btn"
-                onclick="document.getElementById('media-input').click()"
-              >
-                📎
-              </button>
+              <button class="attach-btn" id="attach-btn">📎</button>
               <input
                 type="text"
                 class="msg-input"
@@ -199,6 +194,8 @@
                 accept="image/*,video/*,audio/*,.pdf,.doc,.txt"
                 onchange="handleMediaSelect(event)"
                 multiple
+                capture="environment"
+                style="display: none"
               />
               <button
                 class="voice-btn"
@@ -270,7 +267,7 @@
       </div>
     </div>
 
-    <!-- Нижнее меню (мобилка) -->
+    <!-- Нижнее меню -->
     <div class="bottom-nav visible" id="bottom-nav">
       <div
         class="nav-item active"
@@ -284,7 +281,7 @@
       </div>
     </div>
 
-    <!-- Контейнер уведомлений -->
+    <!-- Уведомления -->
     <div id="notifications-container"></div>
 
     <!-- Скрипты -->
@@ -297,5 +294,14 @@
     <script src="/chat/js/media.js"></script>
     <script src="/chat/js/voice.js"></script>
     <script src="/chat/js/settings.js"></script>
+
+    <!-- Инициализация кнопки вложения -->
+    <script>
+      document
+        .getElementById("attach-btn")
+        .addEventListener("click", function () {
+          document.getElementById("media-input").click();
+        });
+    </script>
   </body>
 </html>
