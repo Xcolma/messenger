@@ -14,7 +14,6 @@ async function loadMessages(chatId) {
           let icon = isMine ? (msg.status === "read" ? "✓✓" : "✓") : "";
           let content = "";
 
-          // Ответ на сообщение
           if (msg.reply_to) {
             const rp = data.messages.find((x) => x.id === msg.reply_to);
             if (rp) {
@@ -29,7 +28,6 @@ async function loadMessages(chatId) {
 
           let mediaHtml = "";
 
-          // Изображения и видео
           if (msg.type === "image" || msg.type === "video") {
             mediaHtml += '<div class="msg-media-wrapper">';
             if (msg.type === "image") {
@@ -40,32 +38,26 @@ async function loadMessages(chatId) {
             mediaHtml += "</div>";
             if (msg.caption)
               mediaHtml += `<div class="msg-media-caption">${escapeHtml(msg.caption)}</div>`;
-          }
-          // Аудиосообщения (Telegram-стиль)
-          else if (msg.type === "audio") {
+          } else if (msg.type === "audio") {
             const duration = msg.duration || 0;
             const mins = Math.floor(duration / 60);
             const secs = Math.floor(duration % 60);
             const durationText = `${mins}:${secs.toString().padStart(2, "0")}`;
 
             mediaHtml += `
-              <div class="msg-audio-telegram" onclick="event.stopPropagation();toggleAudio(event, 'audio-${msg.id}')">
-                <div class="audio-play-btn" id="audio-btn-${msg.id}">▶</div>
+              <div class="msg-audio-telegram" data-audio-id="audio-${msg.id}">
+                <button class="audio-play-btn" id="audio-btn-${msg.id}" data-audio-id="audio-${msg.id}">▶</button>
                 <div class="audio-wave-container">
                   <div class="audio-wave-track">
                     <div class="audio-wave-progress" id="audio-progress-${msg.id}"></div>
                   </div>
                 </div>
-                <div class="audio-duration" id="audio-duration-${msg.id}">${durationText}</div>
-                <audio id="audio-${msg.id}" src="${msg.content}" preload="metadata" style="display:none"></audio>
+                <span class="audio-duration" id="audio-duration-${msg.id}">${durationText}</span>
+                <audio id="audio-${msg.id}" src="${msg.content}" preload="auto" playsinline style="position:absolute;width:0;height:0;opacity:0;pointer-events:none;"></audio>
               </div>`;
-          }
-          // Файлы
-          else if (msg.type === "file") {
+          } else if (msg.type === "file") {
             mediaHtml += `<div class="msg-file" onclick="event.stopPropagation()">📎 <a href="${msg.content}" target="_blank" onclick="event.stopPropagation()">${escapeHtml(msg.file_name || "файл")}</a></div>`;
-          }
-          // Текст
-          else {
+          } else {
             content += `<span>${escapeHtml(msg.content || "")}</span>`;
           }
 
@@ -93,13 +85,15 @@ async function loadMessages(chatId) {
         .join("");
 
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+      // Навешиваем обработчики для аудио после рендера
+      bindAudioEvents();
     }
   } catch (e) {
     console.error("Ошибка загрузки сообщений:", e);
   }
 }
 
-// Безопасный HTML
 function escapeHtml(text) {
   if (!text) return "";
   const div = document.createElement("div");
@@ -107,53 +101,119 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-// Управление аудиосообщениями
-function toggleAudio(event, audioId) {
-  event.stopPropagation();
+// Глобальное состояние аудио
+let currentAudio = null;
+let currentAudioBtn = null;
+let currentAudioProgress = null;
+let currentAudioDuration = null;
+
+function bindAudioEvents() {
+  // Находим все аудио-блоки и кнопки
+  document.querySelectorAll(".msg-audio-telegram").forEach((block) => {
+    const audioId = block.getAttribute("data-audio-id");
+    const btn = block.querySelector(".audio-play-btn");
+    const audio = document.getElementById(audioId);
+
+    if (!btn || !audio) return;
+
+    // Удаляем старый обработчик
+    const newBtn = btn.cloneNode(true);
+    btn.parentNode.replaceChild(newBtn, btn);
+
+    // Вешаем обработчик на кнопку
+    newBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      e.preventDefault();
+      toggleAudio(audioId);
+    });
+
+    // Также клик по всему блоку
+    block.addEventListener("click", function (e) {
+      e.stopPropagation();
+      toggleAudio(audioId);
+    });
+
+    // Предзагрузка аудио
+    audio.load();
+  });
+}
+
+function toggleAudio(audioId) {
   const audio = document.getElementById(audioId);
   const btn = document.getElementById(`audio-btn-${audioId}`);
   const progress = document.getElementById(`audio-progress-${audioId}`);
-  const duration = document.getElementById(`audio-duration-${audioId}`);
+  const durationEl = document.getElementById(`audio-duration-${audioId}`);
 
-  if (!audio) return;
+  if (!audio || !btn) return;
 
-  // Остановить все остальные аудио
-  document.querySelectorAll("audio").forEach((a) => {
-    if (a.id !== audioId && !a.paused) {
-      a.pause();
-      const otherBtn = document.getElementById(`audio-btn-${a.id}`);
-      if (otherBtn) otherBtn.textContent = "▶";
-    }
-  });
+  // Если это другое аудио — останавливаем текущее
+  if (currentAudio && currentAudio !== audio && !currentAudio.paused) {
+    currentAudio.pause();
+    if (currentAudioBtn) currentAudioBtn.textContent = "▶";
+    if (currentAudioProgress) currentAudioProgress.style.width = "0%";
+  }
 
   if (audio.paused) {
-    audio.play().catch((e) => console.log("Audio play error:", e));
-    if (btn) btn.textContent = "⏸";
+    // Воспроизводим
+    const playPromise = audio.play();
 
-    audio.ontimeupdate = () => {
-      if (audio.duration && progress && duration) {
-        const percent = (audio.currentTime / audio.duration) * 100;
-        progress.style.width = percent + "%";
+    if (playPromise !== undefined) {
+      playPromise
+        .then(() => {
+          btn.textContent = "⏸";
+          currentAudio = audio;
+          currentAudioBtn = btn;
+          currentAudioProgress = progress;
+          currentAudioDuration = durationEl;
 
-        const remaining = audio.duration - audio.currentTime;
-        const mins = Math.floor(remaining / 60);
-        const secs = Math.floor(remaining % 60);
-        duration.textContent = `${mins}:${secs.toString().padStart(2, "0")}`;
-      }
-    };
+          // Обновление прогресса
+          audio.ontimeupdate = () => {
+            if (audio.duration && progress && durationEl) {
+              const percent = (audio.currentTime / audio.duration) * 100;
+              progress.style.width = percent + "%";
 
-    audio.onended = () => {
-      if (btn) btn.textContent = "▶";
-      if (progress) progress.style.width = "0%";
-      const origDuration = audio.duration || 0;
-      const mins = Math.floor(origDuration / 60);
-      const secs = Math.floor(origDuration % 60);
-      if (duration)
-        duration.textContent = `${mins}:${secs.toString().padStart(2, "0")}`;
-    };
+              const remaining = audio.duration - audio.currentTime;
+              const mins = Math.floor(remaining / 60);
+              const secs = Math.floor(remaining % 60);
+              durationEl.textContent = `${mins}:${secs.toString().padStart(2, "0")}`;
+            }
+          };
+
+          // Окончание
+          audio.onended = () => {
+            btn.textContent = "▶";
+            if (progress) progress.style.width = "0%";
+            if (durationEl) {
+              const origDuration = audio.duration || 0;
+              const mins = Math.floor(origDuration / 60);
+              const secs = Math.floor(origDuration % 60);
+              durationEl.textContent = `${mins}:${secs.toString().padStart(2, "0")}`;
+            }
+            currentAudio = null;
+            currentAudioBtn = null;
+            currentAudioProgress = null;
+            currentAudioDuration = null;
+          };
+        })
+        .catch((err) => {
+          console.log("Audio play failed:", err);
+          // Пробуем загрузить и воспроизвести снова
+          audio.load();
+          setTimeout(() => {
+            audio.play().catch(() => {
+              showNotification("❌", "Не удалось воспроизвести аудио");
+            });
+          }, 100);
+        });
+    }
   } else {
+    // Пауза
     audio.pause();
-    if (btn) btn.textContent = "▶";
+    btn.textContent = "▶";
+    currentAudio = null;
+    currentAudioBtn = null;
+    currentAudioProgress = null;
+    currentAudioDuration = null;
   }
 }
 
@@ -174,9 +234,11 @@ function selectMessage(e, id) {
   selectedMsg = id;
 }
 
-// Закрытие меню при клике вне сообщения
 document.addEventListener("click", function (e) {
-  if (!e.target.closest(".message")) {
+  if (
+    !e.target.closest(".message") &&
+    !e.target.closest(".msg-audio-telegram")
+  ) {
     document
       .querySelectorAll(".message.selected")
       .forEach((m) => m.classList.remove("selected"));
@@ -192,7 +254,6 @@ function sendMessage() {
   if (!caption && pendingMedia.length === 0 && !editMsgId) return;
   if (!currentChat) return;
 
-  // Редактирование
   if (editMsgId) {
     socket.emit("edit-message", {
       messageId: editMsgId,
@@ -205,7 +266,6 @@ function sendMessage() {
     return;
   }
 
-  // Отправка медиа
   if (pendingMedia.length > 0) {
     pendingMedia.forEach((m) => {
       let type = "file";
@@ -234,9 +294,7 @@ function sendMessage() {
     pendingMedia = [];
     updateMediaPreview();
     input.value = "";
-  }
-  // Отправка текста
-  else if (caption) {
+  } else if (caption) {
     const msgData = {
       chatId: currentChat.id,
       fromUser: currentUser,

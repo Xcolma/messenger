@@ -52,13 +52,15 @@ function updateUIVisibility() {
   const bn = document.getElementById("bottom-nav");
   if (!bn) return;
 
-  const showNav = currentTab === "settings";
-  bn.classList.toggle("visible", showNav);
+  // Нижнее меню видно всегда на мобилке
+  const isMobile = window.innerWidth < 769;
+  bn.classList.toggle("visible", isMobile);
 }
 
 function switchTab(tab) {
   currentTab = tab;
 
+  // Подсветка активной вкладки
   document
     .querySelectorAll(".nav-item")
     .forEach((e) => e.classList.remove("active"));
@@ -74,28 +76,24 @@ function switchTab(tab) {
   sp.classList.remove("active");
 
   if (tab === "chats") {
-    // НЕ сбрасываем currentChat — он нужен для отображения открытого чата
-
     if (currentChat) {
-      // Если чат открыт — показываем его
+      // Открыт чат — показываем его
       es.style.display = "none";
       cv.classList.add("active");
       document.getElementById("header-title").textContent =
         getChatName(currentChat);
 
-      // На мобилке показываем чат
       if (window.innerWidth < 769) {
         document.getElementById("chats-panel").classList.add("hide");
         document.getElementById("right-panel").classList.add("show");
         document.getElementById("back-btn").classList.add("show");
       }
     } else {
-      // Если чат не открыт — показываем список чатов
+      // Нет открытого чата — список чатов
       es.style.display = "flex";
       cv.classList.remove("active");
       document.getElementById("header-title").textContent = "💬 Мессенджер";
 
-      // На мобилке показываем список чатов
       if (window.innerWidth < 769) {
         document.getElementById("chats-panel").classList.remove("hide");
         document.getElementById("right-panel").classList.remove("show");
@@ -112,7 +110,6 @@ function switchTab(tab) {
     document.getElementById("header-title").textContent = "⚙️ Настройки";
     loadSettings();
 
-    // На мобилке показываем правую панель
     if (window.innerWidth < 769) {
       document.getElementById("chats-panel").classList.add("hide");
       document.getElementById("right-panel").classList.add("show");
